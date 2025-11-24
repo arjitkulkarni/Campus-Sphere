@@ -1,0 +1,16 @@
+{
+  "name": "campus-sphere",
+  "version": "1.0.0",
+  "description": "CampusSphere - Next Gen Campus Engagement Platform",
+  "scripts": {
+    "client": "cd client && npm run dev",
+    "server": "cd server && npm run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "concurrently": "^8.0.0"
+  }
+}
