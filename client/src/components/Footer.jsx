@@ -8,7 +8,9 @@ const Footer = () => {
             borderTop: '1px solid var(--glass-border)',
             marginTop: 'auto',
             textAlign: 'center',
-            color: 'var(--text-secondary)'
+            color: 'var(--text-secondary)',
+            position: 'relative',
+            zIndex: 2
         }}>
             <p>&copy; 2025 CampusSphere. All rights reserved.</p>
             <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '2rem' }}>
