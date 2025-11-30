@@ -620,12 +620,6 @@ const Feed = () => {
 
                                 {/* Enhanced Quick Actions */}
                                 <div className="quick-actions-enhanced">
-                                    <Link to="/profile" className="quick-action-btn-enhanced" data-icon="👤">
-                                        <span className="action-icon">👤</span>
-                                        <span className="action-text">{user?.name || 'Profile'}</span>
-                                        <span className="action-arrow">→</span>
-                                    </Link>
-                                    
                                     {/* Followers and Following Buttons */}
                                     <div className="followers-connections-section">
                                         <button 
@@ -722,8 +716,8 @@ const Feed = () => {
                                         />
                                         <Button variant="primary" style={{ minWidth: '100px' }}>
                                             Post
-                                        </Button>
-                                    </div>
+                            </Button>
+                        </div>
                                 ) : (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                                         <div className="composer-avatar">
@@ -761,16 +755,16 @@ const Feed = () => {
                                     </div>
                                 )}
 
-                                {showCreatePost && (
+                        {showCreatePost && (
                                     <form onSubmit={handleCreatePost} className="post-composer-form">
                                         <div className="form-group">
                                             <label className="form-label">
                                                 <span style={{ marginRight: '0.5rem' }}>📝</span>
-                                                Post Type
-                                            </label>
-                                            <select
-                                                value={newPost.type}
-                                                onChange={(e) => setNewPost({ ...newPost, type: e.target.value })}
+                                            Post Type
+                                        </label>
+                                        <select
+                                            value={newPost.type}
+                                            onChange={(e) => setNewPost({ ...newPost, type: e.target.value })}
                                                 className="form-input"
                                             >
                                                 <option value="general">💬 General</option>
@@ -778,20 +772,20 @@ const Feed = () => {
                                                 <option value="discussion">💭 Discussion</option>
                                                 <option value="event">📅 Event</option>
                                                 <option value="opportunity">💼 Opportunity</option>
-                                            </select>
-                                        </div>
+                                        </select>
+                                    </div>
                                         <div className="form-group">
                                             <label className="form-label">
                                                 <span style={{ marginRight: '0.5rem' }}>✍️</span>
                                                 Content
-                                            </label>
-                                            <textarea
-                                                value={newPost.content}
-                                                onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                                        </label>
+                                        <textarea
+                                            value={newPost.content}
+                                            onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
                                                 rows="5"
                                                 className="form-input"
                                                 placeholder="Share your thoughts, achievements, or opportunities..."
-                                                required
+                                            required
                                                 style={{ resize: 'vertical', minHeight: '120px' }}
                                             />
                                             <div style={{ 
@@ -802,20 +796,20 @@ const Feed = () => {
                                             }}>
                                                 {newPost.content.length} characters
                                             </div>
-                                        </div>
+                                    </div>
                                         <div className="form-group">
                                             <label className="form-label">
                                                 <span style={{ marginRight: '0.5rem' }}>🏷️</span>
                                                 Tags (optional)
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={newPost.tags}
-                                                onChange={(e) => setNewPost({ ...newPost, tags: e.target.value })}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={newPost.tags}
+                                            onChange={(e) => setNewPost({ ...newPost, tags: e.target.value })}
                                                 className="form-input"
                                                 placeholder="tech, career, advice (comma separated)"
-                                            />
-                                        </div>
+                                        />
+                                    </div>
                                         <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
                                             <Button 
                                                 type="button" 
@@ -847,9 +841,9 @@ const Feed = () => {
                                                         <span className="btn-shine"></span>
                                                     </>
                                                 )}
-                                            </Button>
+                                    </Button>
                                         </div>
-                                    </form>
+                                </form>
                                 )}
                             </Card>
 
@@ -878,10 +872,10 @@ const Feed = () => {
                                             <h3 style={{ margin: '0 0 0.5rem 0' }}>Share your first update</h3>
                                             <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
                                                 Start the conversation by posting about your projects, wins, or questions.
-                                            </p>
-                                            <Button variant="primary" onClick={() => setShowCreatePost(true)}>
+                                </p>
+                                <Button variant="primary" onClick={() => setShowCreatePost(true)}>
                                                 Create first post
-                                            </Button>
+                                </Button>
                                         </div>
                             </Card>
                         ) : (

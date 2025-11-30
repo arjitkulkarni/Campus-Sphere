@@ -46,6 +46,7 @@ export const authAPI = {
 
 export const postsAPI = {
     getAll: () => api.get('/posts'),
+    getMine: () => api.get('/posts/me'),
     getOne: (id) => api.get(`/posts/${id}`),
     create: (data) => api.post('/posts', data),
     update: (id, data) => api.put(`/posts/${id}`, data),

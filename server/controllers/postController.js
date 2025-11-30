@@ -34,6 +34,27 @@ exports.getPosts = async (req, res) => {
     }
 };
 
+// @desc    Get posts for the authenticated user (My Posts)
+// @route   GET /api/posts/me
+// @access  Private
+exports.getMyPosts = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        let userPosts = posts.findByUser(userId);
+
+        // Sort by createdAt descending
+        userPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        // Populate user data
+        const populatedPosts = userPosts.map(post => populatePost(post));
+
+        res.status(200).json(populatedPosts);
+    } catch (error) {
+        console.error('GetMyPosts error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Get single post
 // @route   GET /api/posts/:id
 // @access  Private

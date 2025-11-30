@@ -4,9 +4,9 @@ import { useToast } from '../../context/ToastContext';
 import { postsAPI } from '../../services/api';
 import Card from '../atoms/Card';
 
-const PostCard = ({ post, onUpdate }) => {
+const PostCard = ({ post, onUpdate, enableOwnerActions = false }) => {
     const { user } = useAuth();
-    const { success } = useToast();
+    const { success, error } = useToast();
     const [liked, setLiked] = useState(post.likes?.some(like => like._id === user?._id || like === user?._id));
     const [likesCount, setLikesCount] = useState(post.likes?.length || 0);
     const [commentText, setCommentText] = useState('');
@@ -14,6 +14,17 @@ const PostCard = ({ post, onUpdate }) => {
     const [isLiking, setIsLiking] = useState(false);
     const [isCommenting, setIsCommenting] = useState(false);
     const [likeAnimation, setLikeAnimation] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editContent, setEditContent] = useState(post.content || '');
+    const [editTags, setEditTags] = useState(
+        Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || '')
+    );
+    const [isSaving, setIsSaving] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const isOwner =
+        enableOwnerActions &&
+        !!user &&
+        (post.user?._id === user._id || post.user === user._id);
 
     const handleLike = async () => {
         if (isLiking) return;
@@ -29,6 +40,55 @@ const PostCard = ({ post, onUpdate }) => {
             setLikeAnimation(false);
         } finally {
             setIsLiking(false);
+        }
+    };
+
+    const handleStartEdit = () => {
+        setEditContent(post.content || '');
+        setEditTags(Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || ''));
+        setIsEditing(true);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editContent.trim()) {
+            error('Post content cannot be empty');
+            return;
+        }
+        if (isSaving) return;
+        setIsSaving(true);
+        try {
+            const tagsArray = editTags
+                ? editTags.split(',').map(tag => tag.trim()).filter(tag => tag)
+                : [];
+            await postsAPI.update(post._id, {
+                content: editContent,
+                tags: tagsArray,
+            });
+            success('Post updated ✏️');
+            setIsEditing(false);
+            if (onUpdate) onUpdate();
+        } catch (err) {
+            console.error('Error updating post:', err);
+            error(err.response?.data?.message || 'Failed to update post');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (isDeleting) return;
+        const confirmed = window.confirm('Delete this post? This cannot be undone.');
+        if (!confirmed) return;
+        setIsDeleting(true);
+        try {
+            await postsAPI.delete(post._id);
+            success('Post deleted 🗑️');
+            if (onUpdate) onUpdate();
+        } catch (err) {
+            console.error('Error deleting post:', err);
+            error(err.response?.data?.message || 'Failed to delete post');
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -89,6 +149,94 @@ const PostCard = ({ post, onUpdate }) => {
 
     return (
         <Card className="post-card-enhanced" style={{ marginBottom: '2rem', position: 'relative' }}>
+            {isOwner && (
+                <div
+                    className="post-owner-actions"
+                    style={{
+                        position: 'absolute',
+                        top: '1.5rem',
+                        right: '2rem',
+                        display: 'flex',
+                        gap: '0.5rem',
+                    }}
+                >
+                    {isEditing ? (
+                        <>
+                            <button
+                                type="button"
+                                onClick={handleSaveEdit}
+                                disabled={isSaving}
+                                className="post-owner-action-btn post-owner-action-primary"
+                                style={{
+                                    fontSize: '0.75rem',
+                                    padding: '0.3rem 0.8rem',
+                                    borderRadius: '999px',
+                                    border: '1px solid rgba(0, 240, 255, 0.6)',
+                                    background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.3), rgba(112, 0, 255, 0.3))',
+                                    color: '#ffffff',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                {isSaving ? 'Saving...' : 'Save'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setIsEditing(false)}
+                                disabled={isSaving}
+                                className="post-owner-action-btn"
+                                style={{
+                                    fontSize: '0.75rem',
+                                    padding: '0.3rem 0.8rem',
+                                    borderRadius: '999px',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    background: 'rgba(0, 0, 0, 0.3)',
+                                    color: 'var(--text-secondary)',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                Cancel
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                type="button"
+                                onClick={handleStartEdit}
+                                className="post-owner-action-btn"
+                                style={{
+                                    fontSize: '0.75rem',
+                                    padding: '0.3rem 0.8rem',
+                                    borderRadius: '999px',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    background: 'rgba(0, 0, 0, 0.3)',
+                                    color: 'var(--text-secondary)',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                Edit
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                                className="post-owner-action-btn"
+                                style={{
+                                    fontSize: '0.75rem',
+                                    padding: '0.3rem 0.8rem',
+                                    borderRadius: '999px',
+                                    border: '1px solid rgba(255, 0, 85, 0.7)',
+                                    background: 'rgba(255, 0, 85, 0.18)',
+                                    color: '#ffb3c7',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                {isDeleting ? 'Deleting...' : 'Delete'}
+                            </button>
+                        </>
+                    )}
+                </div>
+            )}
+
             {/* Post Header */}
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
                 <div className="post-avatar-container">
@@ -136,33 +284,74 @@ const PostCard = ({ post, onUpdate }) => {
 
             {/* Post Content */}
             <div className="post-content">
-                <p style={{ 
-                    marginBottom: '1rem', 
-                    lineHeight: '1.7',
-                    fontSize: '1rem',
-                    color: 'var(--text-primary)'
-                }}>
-                    {post.content}
-                </p>
+                {isEditing ? (
+                    <textarea
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        rows="4"
+                        style={{
+                            width: '100%',
+                            padding: '1rem',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--glass-border)',
+                            borderRadius: '12px',
+                            color: 'var(--text-primary)',
+                            outline: 'none',
+                            resize: 'vertical',
+                            fontFamily: 'inherit',
+                            fontSize: '0.95rem',
+                        }}
+                    />
+                ) : (
+                    <p style={{ 
+                        marginBottom: '1rem', 
+                        lineHeight: '1.7',
+                        fontSize: '1rem',
+                        color: 'var(--text-primary)'
+                    }}>
+                        {post.content}
+                    </p>
+                )}
             </div>
 
             {/* Tags */}
-            {post.tags && post.tags.length > 0 && (
-                <div className="post-tags" style={{ 
-                    display: 'flex', 
-                    gap: '0.5rem', 
-                    marginBottom: '1.25rem', 
-                    flexWrap: 'wrap' 
-                }}>
-                    {post.tags.map((tag, idx) => (
-                        <span
-                            key={idx}
-                            className="post-tag"
-                        >
-                            #{tag}
-                        </span>
-                    ))}
+            {isEditing ? (
+                <div style={{ marginBottom: '1.25rem' }}>
+                    <input
+                        type="text"
+                        value={editTags}
+                        onChange={(e) => setEditTags(e.target.value)}
+                        placeholder="Tags (comma separated)"
+                        style={{
+                            width: '100%',
+                            padding: '0.75rem 1rem',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--glass-border)',
+                            borderRadius: '999px',
+                            color: 'var(--text-secondary)',
+                            outline: 'none',
+                            fontSize: '0.875rem',
+                        }}
+                    />
                 </div>
+            ) : (
+                post.tags && post.tags.length > 0 && (
+                    <div className="post-tags" style={{ 
+                        display: 'flex', 
+                        gap: '0.5rem', 
+                        marginBottom: '1.25rem', 
+                        flexWrap: 'wrap' 
+                    }}>
+                        {post.tags.map((tag, idx) => (
+                            <span
+                                key={idx}
+                                className="post-tag"
+                            >
+                                #{tag}
+                            </span>
+                        ))}
+                    </div>
+                )
             )}
 
             {/* Post Actions */}

@@ -223,6 +223,17 @@ body {
   align-items: center;
 }
 
+.navbar-profile-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-profile-link:hover {
+  text-decoration: none;
+}
+
 .navbar-user {
   display: flex;
   align-items: center;
@@ -231,12 +242,39 @@ body {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
 }
 
-.navbar-user:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(0, 240, 255, 0.3);
+.navbar-profile-link:hover .navbar-user,
+.navbar-profile-active .navbar-user {
+  background: linear-gradient(135deg, 
+    rgba(0, 240, 255, 0.15), 
+    rgba(112, 0, 255, 0.1)
+  );
+  border-color: var(--primary);
+  transform: translateX(4px);
+  box-shadow: 
+    0 4px 16px rgba(0, 240, 255, 0.3),
+    0 0 20px rgba(0, 240, 255, 0.15);
+}
+
+.navbar-profile-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.2), transparent);
+  transition: left 0.5s;
+  pointer-events: none;
+}
+
+.navbar-profile-link:hover::before {
+  left: 100%;
 }
 
 .user-avatar-small {
@@ -257,6 +295,27 @@ body {
   color: var(--text-primary);
   font-size: 0.9375rem;
   font-weight: 500;
+  transition: color 0.3s;
+}
+
+.navbar-profile-link:hover .user-name {
+  color: var(--primary);
+}
+
+.navbar-profile-arrow {
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 1rem;
+  margin-left: 0.25rem;
+}
+
+.navbar-profile-link:hover .navbar-profile-arrow,
+.navbar-profile-active .navbar-profile-arrow {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .logout-btn {
@@ -1976,6 +2035,10 @@ a:hover {
     display: none;
   }
   
+  .navbar-profile-arrow {
+    display: none;
+  }
+  
   .dashboard-layout {
     grid-template-columns: 1fr;
   }
@@ -3025,21 +3088,35 @@ html {
 }
 
 .fc-value {
-  font-size: clamp(1.9rem, 2.3vw, 2.4rem);
+  font-size: clamp(1.75rem, 2.2vw, 2.25rem);
   font-weight: 800;
   line-height: 1.2;
   color: #ffffff;
-  text-shadow: none;
+  text-shadow: 
+    0 0 10px rgba(255, 255, 255, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.3);
   letter-spacing: -0.02em;
 }
 
 .fc-label {
-  font-size: clamp(0.8rem, 1vw, 0.9rem);
-  line-height: 1.4;
-  color: var(--text-primary);
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  font-size: 0.75rem !important;
+  line-height: 1.4 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  text-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.9),
+    0 0 8px rgba(255, 255, 255, 0.4) !important;
+  margin: 0.25rem 0 0 0 !important;
+  position: relative !important;
+  z-index: 10 !important;
+  display: block !important;
+  width: 100% !important;
+  text-align: center !important;
 }
 
 .stat-value-enhanced {
@@ -3840,28 +3917,29 @@ canvas {
 .followers-connections-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin: 1rem 0;
+  gap: 0.75rem;
+  margin: 0.75rem 0;
 }
 
 .followers-connections-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.875rem;
-  padding: 1.5rem 1rem;
-  background: rgba(5, 5, 15, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 18px;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  padding: 0.875rem 0.75rem 1rem 0.75rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
   color: var(--text-primary);
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   text-align: center;
   font-family: inherit;
-  min-height: 110px;
+  min-height: 100px;
+  backdrop-filter: blur(10px);
 }
 
 .followers-connections-btn::before {
@@ -3873,6 +3951,8 @@ canvas {
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.2), transparent);
   transition: left 0.6s;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .followers-connections-btn:hover::before {
@@ -3914,9 +3994,9 @@ canvas {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   background: linear-gradient(135deg, 
     rgba(112, 0, 255, 0.2), 
     rgba(0, 240, 255, 0.15)
@@ -3924,6 +4004,8 @@ canvas {
   border: 2px solid rgba(112, 0, 255, 0.3);
   transition: all 0.3s;
   position: relative;
+  z-index: 10;
+  flex-shrink: 0;
 }
 
 .fc-following .fc-icon-wrapper {
@@ -3940,8 +4022,8 @@ canvas {
 }
 
 .fc-icon {
-  font-size: 1.875rem;
-  filter: drop-shadow(0 0 10px currentColor);
+  font-size: 1.375rem;
+  filter: drop-shadow(0 0 8px currentColor);
   transition: transform 0.3s;
   display: block;
 }
@@ -3952,36 +4034,52 @@ canvas {
 }
 
 .fc-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.25rem !important;
+  width: 100% !important;
+  position: relative !important;
+  z-index: 10 !important;
+  flex: 1 !important;
+  min-height: auto !important;
 }
 
 .fc-value {
-  font-size: clamp(1.75rem, 2.2vw, 2.25rem);
+  font-size: clamp(1.25rem, 1.6vw, 1.5rem);
   font-weight: 800;
   line-height: 1.2;
   color: #ffffff;
-  text-shadow: none;
+  text-shadow: 
+    0 0 8px rgba(255, 255, 255, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.3);
   letter-spacing: -0.02em;
-  min-height: 1.5em;
+  min-height: 1.2em;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .fc-label {
-  font-size: clamp(0.8rem, 1vw, 0.9rem);
-  line-height: 1.4;
-  color: var(--text-primary);
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  opacity: 0.9;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  font-size: 0.75rem !important;
+  line-height: 1.4 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  text-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.9),
+    0 0 8px rgba(255, 255, 255, 0.4) !important;
+  margin: 0.25rem 0 0 0 !important;
+  position: relative !important;
+  z-index: 10 !important;
+  display: block !important;
+  width: 100% !important;
+  text-align: center !important;
 }
 
 .fc-followers .fc-value {
@@ -3990,8 +4088,8 @@ canvas {
 }
 
 .followers-connections-btn:hover .fc-label {
-  color: var(--text-primary);
-  opacity: 1;
+  color: #ffffff !important;
+  opacity: 1 !important;
 }
 
 /* Enhanced Stats */

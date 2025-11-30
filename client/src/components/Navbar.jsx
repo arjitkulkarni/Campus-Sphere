@@ -63,12 +63,18 @@ const Navbar = () => {
             <div className="navbar-actions">
                 {user ? (
                     <>
-                        <div className="navbar-user">
-                            <div className="user-avatar-small">
-                                {user.name?.charAt(0).toUpperCase() || 'U'}
+                        <Link 
+                            to="/profile" 
+                            className={`navbar-profile-link ${isActive('/profile') ? 'navbar-profile-active' : ''}`}
+                        >
+                            <div className="navbar-user">
+                                <div className="user-avatar-small">
+                                    {user.name?.charAt(0).toUpperCase() || 'U'}
+                                </div>
+                                <span className="user-name">{user.name || 'Profile'}</span>
+                                <span className="navbar-profile-arrow">→</span>
                             </div>
-                            <span className="user-name">{user.name}</span>
-                        </div>
+                        </Link>
                         <Button variant="glass" onClick={handleLogout} className="logout-btn">
                             <span>Logout</span>
                         </Button>

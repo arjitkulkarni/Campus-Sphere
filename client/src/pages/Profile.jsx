@@ -5,10 +5,14 @@ import Card from '../components/atoms/Card';
 import Input from '../components/atoms/Input';
 import Button from '../components/atoms/Button';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { postsAPI } from '../services/api';
+import PostCard from '../components/molecules/PostCard';
 import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
     const { user, loading: authLoading, updateProfile } = useAuth();
+    const { error: showError } = useToast();
     const navigate = useNavigate();
     const canvasRef = useRef(null);
     const particlesRef = useRef([]);
@@ -20,6 +24,24 @@ const Profile = () => {
         skills: '',
     });
     const [loading, setLoading] = useState(false);
+    const [myPosts, setMyPosts] = useState([]);
+    const [myPostsLoading, setMyPostsLoading] = useState(true);
+
+    const fetchMyPosts = async () => {
+        if (!user) return;
+        setMyPostsLoading(true);
+        try {
+            const response = await postsAPI.getMine();
+            setMyPosts(response.data || []);
+        } catch (error) {
+            console.error('Error fetching my posts:', error);
+            if (showError) {
+                showError(error.response?.data?.message || 'Failed to load your posts');
+            }
+        } finally {
+            setMyPostsLoading(false);
+        }
+    };
 
     // Animated particle background (same style as auth pages)
     useEffect(() => {
@@ -110,6 +132,7 @@ const Profile = () => {
                 bio: user.bio || '',
                 skills: user.skills?.join(', ') || '',
             });
+            fetchMyPosts();
         }
     }, [user, authLoading, navigate]);
 
@@ -207,212 +230,255 @@ const Profile = () => {
                         </h1>
 
                         <Card>
-                        {/* Header / Identity */}
-                        <div style={{ display: 'flex', gap: '2rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
-                            <div
+                            {/* Header / Identity */}
+                            <div style={{ display: 'flex', gap: '2rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+                                <div
+                                    style={{
+                                        width: '120px',
+                                        height: '120px',
+                                        borderRadius: '50%',
+                                        background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontWeight: 'bold',
+                                        fontSize: '3rem',
+                                        flexShrink: 0,
+                                        boxShadow: '0 0 30px rgba(0, 240, 255, 0.3)',
+                                        border: '3px solid rgba(0, 240, 255, 0.5)',
+                                    }}
+                                >
+                                    {user.name?.charAt(0).toUpperCase() || 'U'}
+                                </div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <h2 style={{ margin: 0, marginBottom: '0.5rem' }}>{user.name}</h2>
+                                    <p style={{ margin: 0, color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.95rem' }}>
+                                        {user.email} • {user.role}
+                                    </p>
+                                    {user.headline && (
+                                        <p style={{ margin: '0.5rem 0', color: 'var(--text-primary)', fontWeight: 500 }}>
+                                            {user.headline}
+                                        </p>
+                                    )}
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.75rem' }}>
+                                        {user.karma > 0 && (
+                                            <div
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.4rem',
+                                                    padding: '0.4rem 0.9rem',
+                                                    background: 'rgba(0, 255, 157, 0.08)',
+                                                    border: '1px solid var(--success)',
+                                                    borderRadius: '999px',
+                                                    fontSize: '0.8rem',
+                                                    color: 'var(--success)',
+                                                }}
+                                            >
+                                                <span>⭐</span>
+                                                <span>{user.karma} Karma points</span>
+                                            </div>
+                                        )}
+                                        {user.isMentor && (
+                                            <div
+                                                style={{
+                                                    padding: '0.4rem 0.9rem',
+                                                    borderRadius: '999px',
+                                                    background: 'rgba(0, 240, 255, 0.08)',
+                                                    border: '1px solid rgba(0, 240, 255, 0.5)',
+                                                    fontSize: '0.8rem',
+                                                    color: 'var(--primary)',
+                                                }}
+                                            >
+                                                🤝 Mentor
+                                            </div>
+                                        )}
+                                        {user.createdAt && (
+                                            <div
+                                                style={{
+                                                    padding: '0.4rem 0.9rem',
+                                                    borderRadius: '999px',
+                                                    background: 'rgba(255, 255, 255, 0.03)',
+                                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                                    fontSize: '0.8rem',
+                                                    color: 'var(--text-secondary)',
+                                                }}
+                                            >
+                                                Joined {new Date(user.createdAt).toLocaleDateString()}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Bio */}
+                            {user.bio && !editing && (
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <h3 style={{ marginBottom: '0.5rem' }}>Bio</h3>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{user.bio}</p>
+                                </div>
+                            )}
+
+                            {/* Skills */}
+                            {user.skills && user.skills.length > 0 && !editing && (
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <h3 style={{ marginBottom: '0.5rem' }}>Skills</h3>
+                                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                        {user.skills.map((skill, idx) => (
+                                            <span
+                                                key={idx}
+                                                style={{
+                                                    padding: '0.25rem 0.75rem',
+                                                    background: 'rgba(0, 240, 255, 0.08)',
+                                                    border: '1px solid var(--primary)',
+                                                    borderRadius: '999px',
+                                                    fontSize: '0.85rem',
+                                                    color: 'var(--primary)',
+                                                }}
+                                            >
+                                                {skill}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Academic Info */}
+                            {(user.college || user.graduationYear) && !editing && (
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <h3 style={{ marginBottom: '0.5rem' }}>Academic Info</h3>
+                                    {user.college && (
+                                        <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0' }}>
+                                            College: {user.college}
+                                        </p>
+                                    )}
+                                    {user.graduationYear && (
+                                        <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0' }}>
+                                            Graduation year: {user.graduationYear}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Professional Info (primarily for alumni) */}
+                            {(user.company || user.jobTitle || typeof user.isEmployed === 'boolean') && !editing && (
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <h3 style={{ marginBottom: '0.5rem' }}>Professional Info</h3>
+                                    {typeof user.isEmployed === 'boolean' && (
+                                        <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0' }}>
+                                            Status: {user.isEmployed ? 'Employed' : 'Not currently employed'}
+                                        </p>
+                                    )}
+                                    {user.company && (
+                                        <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0' }}>
+                                            Company: {user.company}
+                                        </p>
+                                    )}
+                                    {user.jobTitle && (
+                                        <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0' }}>
+                                            Title: {user.jobTitle}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Edit mode for headline, bio and skills */}
+                            {editing ? (
+                                <form onSubmit={handleSubmit}>
+                                    <Input
+                                        label="Headline"
+                                        name="headline"
+                                        value={formData.headline}
+                                        onChange={handleChange}
+                                        placeholder="Your professional headline"
+                                    />
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+                                            Bio
+                                        </label>
+                                        <textarea
+                                            name="bio"
+                                            value={formData.bio}
+                                            onChange={handleChange}
+                                            rows="4"
+                                            style={{
+                                                width: '100%',
+                                                padding: '1rem',
+                                                background: 'rgba(255, 255, 255, 0.05)',
+                                                border: '1px solid var(--glass-border)',
+                                                borderRadius: '8px',
+                                                color: 'white',
+                                                outline: 'none',
+                                                resize: 'none',
+                                                fontFamily: 'inherit'
+                                            }}
+                                        />
+                                    </div>
+                                    <Input
+                                        label="Skills (comma separated)"
+                                        name="skills"
+                                        value={formData.skills}
+                                        onChange={handleChange}
+                                        placeholder="e.g. React, Python, Design"
+                                    />
+                                    <div style={{ display: 'flex', gap: '1rem' }}>
+                                        <Button type="submit" variant="primary" disabled={loading}>
+                                            {loading ? 'Saving...' : 'Save'}
+                                        </Button>
+                                        <Button type="button" variant="glass" onClick={() => setEditing(false)}>
+                                            Cancel
+                                        </Button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <Button variant="primary" onClick={() => setEditing(true)}>
+                                    Edit Profile
+                                </Button>
+                            )}
+                        </Card>
+
+                        <div style={{ marginTop: '2.5rem' }}>
+                            <h2
                                 style={{
-                                    width: '120px',
-                                    height: '120px',
-                                    borderRadius: '50%',
-                                    background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontWeight: 'bold',
-                                    fontSize: '3rem',
-                                    flexShrink: 0,
-                                    boxShadow: '0 0 30px rgba(0, 240, 255, 0.3)',
-                                    border: '3px solid rgba(0, 240, 255, 0.5)',
+                                    marginBottom: '1rem',
+                                    fontSize: '1.25rem',
+                                    color: 'var(--text-primary)',
                                 }}
                             >
-                                {user.name?.charAt(0).toUpperCase() || 'U'}
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                                <h2 style={{ margin: 0, marginBottom: '0.5rem' }}>{user.name}</h2>
-                                <p style={{ margin: 0, color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.95rem' }}>
-                                    {user.email} • {user.role}
+                                My Posts
+                            </h2>
+
+                            {myPostsLoading ? (
+                                <p style={{ color: 'var(--text-secondary)' }}>
+                                    Loading your posts...
                                 </p>
-                                {user.headline && (
-                                    <p style={{ margin: '0.5rem 0', color: 'var(--text-primary)', fontWeight: 500 }}>
-                                        {user.headline}
-                                    </p>
-                                )}
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.75rem' }}>
-                                    {user.karma > 0 && (
-                                        <div
+                            ) : myPosts.length === 0 ? (
+                                <Card>
+                                    <div style={{ padding: '1.5rem 1.25rem', textAlign: 'center' }}>
+                                        <p
                                             style={{
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '0.4rem',
-                                                padding: '0.4rem 0.9rem',
-                                                background: 'rgba(0, 255, 157, 0.08)',
-                                                border: '1px solid var(--success)',
-                                                borderRadius: '999px',
-                                                fontSize: '0.8rem',
-                                                color: 'var(--success)',
-                                            }}
-                                        >
-                                            <span>⭐</span>
-                                            <span>{user.karma} Karma points</span>
-                                        </div>
-                                    )}
-                                    {user.isMentor && (
-                                        <div
-                                            style={{
-                                                padding: '0.4rem 0.9rem',
-                                                borderRadius: '999px',
-                                                background: 'rgba(0, 240, 255, 0.08)',
-                                                border: '1px solid rgba(0, 240, 255, 0.5)',
-                                                fontSize: '0.8rem',
-                                                color: 'var(--primary)',
-                                            }}
-                                        >
-                                            🤝 Mentor
-                                        </div>
-                                    )}
-                                    {user.createdAt && (
-                                        <div
-                                            style={{
-                                                padding: '0.4rem 0.9rem',
-                                                borderRadius: '999px',
-                                                background: 'rgba(255, 255, 255, 0.03)',
-                                                border: '1px solid rgba(255, 255, 255, 0.08)',
-                                                fontSize: '0.8rem',
+                                                margin: '0 0 0.75rem 0',
                                                 color: 'var(--text-secondary)',
                                             }}
                                         >
-                                            Joined {new Date(user.createdAt).toLocaleDateString()}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Bio */}
-                        {user.bio && !editing && (
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <h3 style={{ marginBottom: '0.5rem' }}>Bio</h3>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{user.bio}</p>
-                            </div>
-                        )}
-
-                        {/* Skills */}
-                        {user.skills && user.skills.length > 0 && !editing && (
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <h3 style={{ marginBottom: '0.5rem' }}>Skills</h3>
-                                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                    {user.skills.map((skill, idx) => (
-                                        <span
-                                            key={idx}
-                                            style={{
-                                                padding: '0.25rem 0.75rem',
-                                                background: 'rgba(0, 240, 255, 0.08)',
-                                                border: '1px solid var(--primary)',
-                                                borderRadius: '999px',
-                                                fontSize: '0.85rem',
-                                                color: 'var(--primary)',
-                                            }}
-                                        >
-                                            {skill}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Academic Info */}
-                        {(user.college || user.graduationYear) && !editing && (
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <h3 style={{ marginBottom: '0.5rem' }}>Academic Info</h3>
-                                {user.college && (
-                                    <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0' }}>
-                                        College: {user.college}
-                                    </p>
-                                )}
-                                {user.graduationYear && (
-                                    <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0' }}>
-                                        Graduation year: {user.graduationYear}
-                                    </p>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Professional Info (primarily for alumni) */}
-                        {(user.company || user.jobTitle || typeof user.isEmployed === 'boolean') && !editing && (
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <h3 style={{ marginBottom: '0.5rem' }}>Professional Info</h3>
-                                {typeof user.isEmployed === 'boolean' && (
-                                    <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0' }}>
-                                        Status: {user.isEmployed ? 'Employed' : 'Not currently employed'}
-                                    </p>
-                                )}
-                                {user.company && (
-                                    <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0' }}>
-                                        Company: {user.company}
-                                    </p>
-                                )}
-                                {user.jobTitle && (
-                                    <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0' }}>
-                                        Title: {user.jobTitle}
-                                    </p>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Edit mode for headline, bio and skills */}
-                        {editing ? (
-                            <form onSubmit={handleSubmit}>
-                                <Input
-                                    label="Headline"
-                                    name="headline"
-                                    value={formData.headline}
-                                    onChange={handleChange}
-                                    placeholder="Your professional headline"
-                                />
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-                                        Bio
-                                    </label>
-                                    <textarea
-                                        name="bio"
-                                        value={formData.bio}
-                                        onChange={handleChange}
-                                        rows="4"
-                                        style={{
-                                            width: '100%',
-                                            padding: '1rem',
-                                            background: 'rgba(255, 255, 255, 0.05)',
-                                            border: '1px solid var(--glass-border)',
-                                            borderRadius: '8px',
-                                            color: 'white',
-                                            outline: 'none',
-                                            resize: 'none',
-                                            fontFamily: 'inherit'
-                                        }}
+                                            You haven’t posted anything yet.
+                                        </p>
+                                        <Button variant="primary" onClick={() => navigate('/feed')}>
+                                            Go to feed to create your first post
+                                        </Button>
+                                    </div>
+                                </Card>
+                            ) : (
+                                myPosts.map((post) => (
+                                    <PostCard
+                                        key={post._id}
+                                        post={post}
+                                        onUpdate={fetchMyPosts}
+                                        enableOwnerActions
                                     />
-                                </div>
-                                <Input
-                                    label="Skills (comma separated)"
-                                    name="skills"
-                                    value={formData.skills}
-                                    onChange={handleChange}
-                                    placeholder="e.g. React, Python, Design"
-                                />
-                                <div style={{ display: 'flex', gap: '1rem' }}>
-                                    <Button type="submit" variant="primary" disabled={loading}>
-                                        {loading ? 'Saving...' : 'Save'}
-                                    </Button>
-                                    <Button type="button" variant="glass" onClick={() => setEditing(false)}>
-                                        Cancel
-                                    </Button>
-                                </div>
-                            </form>
-                        ) : (
-                            <Button variant="primary" onClick={() => setEditing(true)}>
-                                Edit Profile
-                            </Button>
-                        )}
-                    </Card>
+                                ))
+                            )}
+                        </div>
                     </div>
                 </div>
             </main>
