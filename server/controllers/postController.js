@@ -1,13 +1,98 @@
 const { posts, users, populateUser, populateUsers } = require('../utils/localDB');
 
+// Helper to add fake engagement data
+const addFakeEngagement = (post, allUsers) => {
+    if (!post || !allUsers || allUsers.length === 0) return post;
+    
+    const populated = { ...post };
+    const postUserId = typeof post.user === 'object' ? post.user?._id : post.user;
+    
+    // Add fake likes if post has few or no likes
+    if (!populated.likes || populated.likes.length < 3) {
+        const numFakeLikes = Math.floor(Math.random() * 15) + 3; // 3-18 fake likes
+        const fakeLikes = [];
+        const availableUsers = allUsers.filter(u => {
+            const userId = u._id || u.id;
+            return userId && userId !== postUserId;
+        });
+        
+        // Get existing like IDs
+        const existingLikeIds = (populated.likes || []).map(like => {
+            return typeof like === 'object' ? (like._id || like.id) : like;
+        });
+        
+        for (let i = 0; i < Math.min(numFakeLikes, availableUsers.length) && fakeLikes.length < numFakeLikes; i++) {
+            const randomUser = availableUsers[Math.floor(Math.random() * availableUsers.length)];
+            const userId = randomUser._id || randomUser.id;
+            if (randomUser && userId && !fakeLikes.includes(userId) && !existingLikeIds.includes(userId)) {
+                fakeLikes.push(userId);
+            }
+        }
+        
+        // Merge with existing likes
+        const existingLikes = populated.likes || [];
+        populated.likes = [...existingLikes, ...fakeLikes];
+    }
+    
+    // Add fake comments if post has few or no comments
+    if (!populated.comments || populated.comments.length < 2) {
+        const numFakeComments = Math.floor(Math.random() * 5) + 1; // 1-6 fake comments
+        const fakeComments = [];
+        const availableUsers = allUsers.filter(u => {
+            const userId = u._id || u.id;
+            return userId && userId !== postUserId;
+        });
+        const commentTemplates = [
+            "Great post! 👍",
+            "This is really helpful, thanks for sharing!",
+            "I totally agree with this!",
+            "Interesting perspective!",
+            "Thanks for the insights!",
+            "Looking forward to more posts like this!",
+            "Well said! 💯",
+            "This resonates with me!",
+        ];
+        
+        // Get existing comment user IDs
+        const existingCommentUserIds = (populated.comments || []).map(comment => {
+            const commentUserId = typeof comment.user === 'object' ? comment.user?._id : comment.user;
+            return commentUserId;
+        });
+        
+        for (let i = 0; i < Math.min(numFakeComments, availableUsers.length) && fakeComments.length < numFakeComments; i++) {
+            const randomUser = availableUsers[Math.floor(Math.random() * availableUsers.length)];
+            const userId = randomUser._id || randomUser.id;
+            if (randomUser && userId && !existingCommentUserIds.includes(userId) && 
+                !fakeComments.some(c => (typeof c.user === 'object' ? c.user?._id : c.user) === userId)) {
+                const daysAgo = Math.floor(Math.random() * 7); // 0-7 days ago
+                const commentDate = new Date();
+                commentDate.setDate(commentDate.getDate() - daysAgo);
+                
+                fakeComments.push({
+                    _id: `comment_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`,
+                    user: userId,
+                    content: commentTemplates[Math.floor(Math.random() * commentTemplates.length)],
+                    createdAt: commentDate.toISOString(),
+                });
+            }
+        }
+        
+        // Merge with existing comments
+        const existingComments = populated.comments || [];
+        populated.comments = [...existingComments, ...fakeComments];
+    }
+    
+    return populated;
+};
+
 // Helper to populate post with user data
 const populatePost = (post) => {
     if (!post) return null;
     const populated = { ...post };
     populated.user = populateUser(post.user);
-    populated.likes = populateUsers(post.likes || []);
-    if (post.comments && Array.isArray(post.comments)) {
-        populated.comments = post.comments.map(comment => ({
+    populated.likes = populateUsers(populated.likes || []);
+    if (populated.comments && Array.isArray(populated.comments)) {
+        populated.comments = populated.comments.map(comment => ({
             ...comment,
             user: populateUser(comment.user),
         }));
@@ -21,6 +106,11 @@ const populatePost = (post) => {
 exports.getPosts = async (req, res) => {
     try {
         let allPosts = posts.findAll();
+        const allUsers = users.findAll();
+        
+        // Add fake engagement data
+        allPosts = allPosts.map(post => addFakeEngagement(post, allUsers));
+        
         // Sort by createdAt descending
         allPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         
@@ -51,6 +141,31 @@ exports.getMyPosts = async (req, res) => {
         res.status(200).json(populatedPosts);
     } catch (error) {
         console.error('GetMyPosts error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Get posts by user ID
+// @route   GET /api/posts/user/:userId
+// @access  Private
+exports.getPostsByUserId = async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        let userPosts = posts.findByUser(userId);
+        const allUsers = users.findAll();
+        
+        // Add fake engagement data
+        userPosts = userPosts.map(post => addFakeEngagement(post, allUsers));
+
+        // Sort by createdAt descending
+        userPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        // Populate user data
+        const populatedPosts = userPosts.map(post => populatePost(post));
+
+        res.status(200).json(populatedPosts);
+    } catch (error) {
+        console.error('GetPostsByUserId error:', error);
         res.status(500).json({ message: error.message });
     }
 };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { postsAPI, connectionsAPI, opportunitiesAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import PostCard from '../components/molecules/PostCard';
@@ -14,6 +14,7 @@ const Feed = () => {
     const { user } = useAuth();
     const { success, error: showError } = useToast();
     const navigate = useNavigate();
+    const location = useLocation();
     const [posts, setPosts] = useState([]);
     const [mentors, setMentors] = useState([]);
     const [opportunities, setOpportunities] = useState([]);
@@ -104,6 +105,28 @@ const Feed = () => {
     useEffect(() => {
         fetchAllData();
     }, []);
+
+    // Refresh data when navigating from profile after connecting
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search);
+        if (searchParams.get('refresh') === 'following') {
+            fetchAllData();
+            // Scroll to following button after a short delay to allow data to load
+            setTimeout(() => {
+                const followingButton = document.querySelector('.fc-following');
+                if (followingButton) {
+                    followingButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Add a highlight effect
+                    followingButton.style.animation = 'pulse-glow 1s ease-in-out';
+                    setTimeout(() => {
+                        followingButton.style.animation = '';
+                    }, 1000);
+                }
+            }, 500);
+            // Remove the query parameter from URL
+            navigate('/feed', { replace: true });
+        }
+    }, [location.search, navigate]);
 
     // Mouse tracking for interactive effects
     useEffect(() => {
@@ -649,38 +672,6 @@ const Feed = () => {
                                             </div>
                                         </button>
                                     </div>
-                                    
-                                    <Link to="/opportunities" className="quick-action-btn-enhanced" data-icon="💼">
-                                        <span className="action-icon">💼</span>
-                                        <span className="action-text">Opportunities</span>
-                                        <span className="action-arrow">→</span>
-                                    </Link>
-                                    <Link to="/mentorship" className="quick-action-btn-enhanced" data-icon="🤝">
-                                        <span className="action-icon">🤝</span>
-                                        <span className="action-text">Mentorship</span>
-                                        <span className="action-arrow">→</span>
-                                    </Link>
-                                </div>
-
-                                {/* Enhanced Stats */}
-                                <div className="user-stats-enhanced">
-                                    <div className="stat-item-enhanced">
-                                        <div className="stat-icon">📝</div>
-                                        <div className="stat-content">
-                                            <div className="stat-value-enhanced">
-                                                {posts.filter(p => p.user?._id === user?._id || p.user === user?._id).length}
-                                            </div>
-                                            <div className="stat-label-enhanced">POSTS</div>
-                                        </div>
-                                    </div>
-                                    <div className="stat-divider"></div>
-                                    <div className="stat-item-enhanced">
-                                        <div className="stat-icon">🔗</div>
-                                        <div className="stat-content">
-                                            <div className="stat-value-enhanced">{connections.length}</div>
-                                            <div className="stat-label-enhanced">CONNECTIONS</div>
-                                        </div>
-                                    </div>
                                 </div>
                             </Card>
                         </aside>
@@ -688,13 +679,16 @@ const Feed = () => {
                         {/* Center Feed */}
                         <section className="dashboard-feed">
                             {/* Welcome Message */}
-                            <div className="welcome-banner">
-                                <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.75rem' }}>
-                                    Welcome back, {user?.name?.split(' ')[0] || 'there'}.
-                                </h2>
-                                <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '1rem' }}>
-                                    Stay updated on the latest posts and opportunities from your campus network.
-                                </p>
+                            <div className="welcome-banner-enhanced">
+                                <div className="welcome-content">
+                                    <h2 className="welcome-title">
+                                        Welcome back, {user?.name?.split(' ')[0] || 'there'} 👋
+                                    </h2>
+                                    <p className="welcome-subtitle">
+                                        Stay updated on the latest posts and opportunities from your campus network.
+                                    </p>
+                                </div>
+                                <div className="welcome-decoration"></div>
                             </div>
 
                             {/* Post Composer */}
@@ -848,40 +842,51 @@ const Feed = () => {
                             </Card>
 
                             {/* Events Banner */}
-                            <Card className="events-banner">
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <div className="events-icon">📅</div>
-                                    <div style={{ flex: 1 }}>
-                                        <h4 style={{ margin: '0 0 0.25rem 0' }}>Campus Events</h4>
-                                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                            <Card className="events-banner-enhanced">
+                                <div className="events-banner-content">
+                                    <div className="events-icon-wrapper">
+                                        <div className="events-icon">📅</div>
+                                        <div className="events-icon-glow"></div>
+                                    </div>
+                                    <div className="events-text">
+                                        <h4 className="events-title">Campus Events</h4>
+                                        <p className="events-description">
                                             Check out upcoming events and workshops
                                         </p>
                                     </div>
-                                    <Button variant="glass" onClick={() => navigate('/opportunities')}>
-                                        Explore
+                                    <Button variant="glass" onClick={() => navigate('/events')} className="events-button">
+                                        Explore →
                                     </Button>
                                 </div>
                             </Card>
 
                             {/* Posts Feed */}
-                            <div className="posts-container">
-                        {posts.length === 0 ? (
-                                    <Card className="empty-state">
-                                        <div style={{ textAlign: 'center', padding: '3rem 2rem' }}>
-                                            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📝</div>
-                                            <h3 style={{ margin: '0 0 0.5rem 0' }}>Share your first update</h3>
-                                            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                            <div className="posts-container-enhanced">
+                                {posts.length === 0 ? (
+                                    <Card className="empty-state-enhanced">
+                                        <div className="empty-state-content">
+                                            <div className="empty-state-icon">📝</div>
+                                            <h3 className="empty-state-title">Share your first update</h3>
+                                            <p className="empty-state-description">
                                                 Start the conversation by posting about your projects, wins, or questions.
-                                </p>
-                                <Button variant="primary" onClick={() => setShowCreatePost(true)}>
+                                            </p>
+                                            <Button variant="primary" onClick={() => setShowCreatePost(true)} className="empty-state-button">
                                                 Create first post
-                                </Button>
+                                            </Button>
                                         </div>
-                            </Card>
-                        ) : (
-                            posts.map((post) => (
-                                        <PostCard key={post._id} post={post} onUpdate={fetchAllData} />
-                                    ))
+                                    </Card>
+                                ) : (
+                                    <div className="posts-list">
+                                        {posts.map((post, index) => (
+                                            <div key={post._id} className="post-wrapper" style={{ animationDelay: `${index * 0.1}s` }}>
+                                                <PostCard 
+                                                    post={post} 
+                                                    onUpdate={fetchAllData} 
+                                                    enableOwnerActions={true}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         </section>

@@ -46,10 +46,10 @@ const PostForm = ({ onPostCreated }) => {
                         style={{
                             width: '100%',
                             padding: '1rem',
-                            background: 'rgba(255, 255, 255, 0.05)',
+                            background: 'rgba(15, 15, 25, 0.95)',
                             border: '1px solid var(--glass-border)',
                             borderRadius: '8px',
-                            color: 'white',
+                            color: 'var(--text-primary)',
                             outline: 'none'
                         }}
                     >

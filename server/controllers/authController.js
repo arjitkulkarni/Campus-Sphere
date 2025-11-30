@@ -141,6 +141,25 @@ exports.getMe = async (req, res) => {
     }
 };
 
+// @desc    Get user by ID
+// @route   GET /api/auth/user/:id
+// @access  Private
+exports.getUserById = async (req, res) => {
+    try {
+        const user = users.findById(req.params.id);
+        if (user) {
+            // Remove password from response
+            const { password: _, ...userResponse } = user;
+            res.status(200).json(userResponse);
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        console.error('GetUserById error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Update user profile (Onboarding)
 // @route   PUT /api/auth/profile
 // @access  Private

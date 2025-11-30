@@ -45,8 +45,45 @@ const Mentorship = () => {
 
     if (loading) {
         return (
-            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ color: 'var(--text-secondary)' }}>Loading...</div>
+            <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', position: 'relative', overflow: 'hidden' }}>
+                {/* Background for loading state */}
+                <div className="feed-background-container" style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    zIndex: 0,
+                    pointerEvents: 'none',
+                    overflow: 'hidden',
+                }}>
+                    <div className="feed-gradient-orb feed-orb-1" style={{
+                        position: 'absolute',
+                        width: '360px',
+                        height: '360px',
+                        background: 'radial-gradient(circle, rgba(0, 240, 255, 0.15), transparent 70%)',
+                        borderRadius: '50%',
+                        top: '-200px',
+                        left: '-200px',
+                        filter: 'blur(60px)',
+                        animation: 'orb-float-1 20s ease-in-out infinite',
+                    }} />
+                    <div className="feed-gradient-orb feed-orb-2" style={{
+                        position: 'absolute',
+                        width: '600px',
+                        height: '600px',
+                        background: 'radial-gradient(circle, rgba(112, 0, 255, 0.15), transparent 70%)',
+                        borderRadius: '50%',
+                        bottom: '-300px',
+                        right: '-300px',
+                        filter: 'blur(80px)',
+                        animation: 'orb-float-2 25s ease-in-out infinite',
+                    }} />
+                </div>
+                <Navbar />
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
+                    <div style={{ color: 'var(--text-secondary)' }}>Loading...</div>
+                </div>
             </div>
         );
     }
@@ -56,9 +93,65 @@ const Mentorship = () => {
     );
 
     return (
-        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', position: 'relative', overflow: 'hidden' }}>
+            {/* Animated Background */}
+            <div className="feed-background-container" style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                zIndex: 0,
+                pointerEvents: 'none',
+                overflow: 'hidden',
+            }}>
+                {/* Gradient Orbs */}
+                <div 
+                    className="feed-gradient-orb feed-orb-1"
+                    style={{
+                        position: 'absolute',
+                        width: '400px',
+                        height: '400px',
+                        background: 'radial-gradient(circle, rgba(0, 240, 255, 0.2), rgba(112, 0, 255, 0.1), transparent 70%)',
+                        borderRadius: '50%',
+                        top: '-200px',
+                        left: '-200px',
+                        filter: 'blur(60px)',
+                        animation: 'orb-float-1 20s ease-in-out infinite',
+                    }}
+                />
+                <div 
+                    className="feed-gradient-orb feed-orb-2"
+                    style={{
+                        position: 'absolute',
+                        width: '500px',
+                        height: '500px',
+                        background: 'radial-gradient(circle, rgba(112, 0, 255, 0.2), rgba(255, 0, 85, 0.1), transparent 70%)',
+                        borderRadius: '50%',
+                        bottom: '-300px',
+                        right: '-300px',
+                        filter: 'blur(80px)',
+                        animation: 'orb-float-2 25s ease-in-out infinite',
+                    }}
+                />
+                <div 
+                    className="feed-gradient-orb feed-orb-3"
+                    style={{
+                        position: 'absolute',
+                        width: '300px',
+                        height: '300px',
+                        background: 'radial-gradient(circle, rgba(255, 0, 85, 0.1), rgba(0, 240, 255, 0.05), transparent 70%)',
+                        borderRadius: '50%',
+                        top: '50%',
+                        left: '50%',
+                        filter: 'blur(50px)',
+                        animation: 'orb-pulse 15s ease-in-out infinite',
+                        transform: 'translate(-50%, -50%)',
+                    }}
+                />
+            </div>
             <Navbar />
-            <main style={{ flex: 1, paddingTop: '100px', paddingBottom: '4rem' }}>
+            <main style={{ flex: 1, paddingTop: '100px', paddingBottom: '4rem', position: 'relative', zIndex: 1 }}>
                 <div className="container">
                     <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
                         <h1 style={{ marginBottom: '2rem' }}>Mentorship</h1>

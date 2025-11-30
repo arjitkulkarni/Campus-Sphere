@@ -10,6 +10,7 @@ import Onboarding from './pages/Onboarding';
 import Feed from './pages/Feed';
 import Mentorship from './pages/Mentorship';
 import Opportunities from './pages/Opportunities';
+import Events from './pages/Events';
 import Profile from './pages/Profile';
 
 function App() {
@@ -54,7 +55,23 @@ function App() {
             } 
           />
           <Route 
+            path="/events" 
+            element={
+              <ProtectedRoute>
+                <Events />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/profile" 
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/profile/:userId" 
             element={
               <ProtectedRoute>
                 <Profile />

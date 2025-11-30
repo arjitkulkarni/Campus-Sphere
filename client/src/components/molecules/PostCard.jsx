@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { postsAPI } from '../../services/api';
@@ -7,6 +8,32 @@ import Card from '../atoms/Card';
 const PostCard = ({ post, onUpdate, enableOwnerActions = false }) => {
     const { user } = useAuth();
     const { success, error } = useToast();
+    const navigate = useNavigate();
+    
+    // Get the post author's user ID - handle different formats
+    const postUserId = post.user?._id || post.user || post.userId;
+    const currentUserId = user?._id || user?.id;
+    
+    // Check if this post belongs to the current user
+    const isCurrentUserPost = user && currentUserId && (
+        postUserId === currentUserId || 
+        String(postUserId) === String(currentUserId) ||
+        (post.user?._id && String(post.user._id) === String(currentUserId))
+    );
+    
+    // Always allow clicking on profile (for any user)
+    const canViewProfile = !!postUserId;
+    
+    // Handler for navigating to profile
+    const handleProfileClick = () => {
+        const postUserId = post.user?._id || post.user || post.userId;
+        if (postUserId) {
+            navigate(`/profile/${postUserId}`);
+        } else {
+            navigate('/profile');
+        }
+    };
+    
     const [liked, setLiked] = useState(post.likes?.some(like => like._id === user?._id || like === user?._id));
     const [likesCount, setLikesCount] = useState(post.likes?.length || 0);
     const [commentText, setCommentText] = useState('');
@@ -21,10 +48,11 @@ const PostCard = ({ post, onUpdate, enableOwnerActions = false }) => {
     );
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const isOwner =
         enableOwnerActions &&
         !!user &&
-        (post.user?._id === user._id || post.user === user._id);
+        (post.user?._id === user._id || post.user === user._id || post.userId === user._id);
 
     const handleLike = async () => {
         if (isLiking) return;
@@ -77,12 +105,11 @@ const PostCard = ({ post, onUpdate, enableOwnerActions = false }) => {
 
     const handleDelete = async () => {
         if (isDeleting) return;
-        const confirmed = window.confirm('Delete this post? This cannot be undone.');
-        if (!confirmed) return;
         setIsDeleting(true);
         try {
             await postsAPI.delete(post._id);
             success('Post deleted 🗑️');
+            setShowDeleteConfirm(false);
             if (onUpdate) onUpdate();
         } catch (err) {
             console.error('Error deleting post:', err);
@@ -217,7 +244,7 @@ const PostCard = ({ post, onUpdate, enableOwnerActions = false }) => {
                             </button>
                             <button
                                 type="button"
-                                onClick={handleDelete}
+                                onClick={() => setShowDeleteConfirm(true)}
                                 disabled={isDeleting}
                                 className="post-owner-action-btn"
                                 style={{
@@ -227,10 +254,11 @@ const PostCard = ({ post, onUpdate, enableOwnerActions = false }) => {
                                     border: '1px solid rgba(255, 0, 85, 0.7)',
                                     background: 'rgba(255, 0, 85, 0.18)',
                                     color: '#ffb3c7',
-                                    cursor: 'pointer',
+                                    cursor: isDeleting ? 'not-allowed' : 'pointer',
+                                    opacity: isDeleting ? 0.6 : 1,
                                 }}
                             >
-                                {isDeleting ? 'Deleting...' : 'Delete'}
+                                🗑️ Delete
                             </button>
                         </>
                     )}
@@ -239,7 +267,12 @@ const PostCard = ({ post, onUpdate, enableOwnerActions = false }) => {
 
             {/* Post Header */}
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
-                <div className="post-avatar-container">
+                <div 
+                    className={`post-avatar-container ${canViewProfile ? 'clickable' : ''}`}
+                    onClick={canViewProfile ? handleProfileClick : undefined}
+                    style={{ cursor: canViewProfile ? 'pointer' : 'default' }}
+                    title={canViewProfile ? 'View profile' : undefined}
+                >
                     <div className="post-avatar">
                         {post.user?.name?.charAt(0).toUpperCase() || 'U'}
                     </div>
@@ -247,7 +280,17 @@ const PostCard = ({ post, onUpdate, enableOwnerActions = false }) => {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
-                        <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>
+                        <h4 
+                            className={canViewProfile ? 'post-user-name' : ''}
+                            onClick={canViewProfile ? handleProfileClick : undefined}
+                            style={{ 
+                                margin: 0, 
+                                fontSize: '1rem', 
+                                fontWeight: 600,
+                                cursor: canViewProfile ? 'pointer' : 'default',
+                            }}
+                            title={canViewProfile ? 'View profile' : undefined}
+                        >
                             {post.user?.name || 'Unknown User'}
                         </h4>
                         <span 
@@ -464,6 +507,82 @@ const PostCard = ({ post, onUpdate, enableOwnerActions = false }) => {
                             ))}
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10000,
+                        backdropFilter: 'blur(8px)',
+                    }}
+                    onClick={() => !isDeleting && setShowDeleteConfirm(false)}
+                >
+                    <Card
+                        style={{
+                            maxWidth: '400px',
+                            width: '90%',
+                            padding: '2rem',
+                            position: 'relative',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h3 style={{ marginTop: 0, marginBottom: '1rem', color: 'var(--text-primary)' }}>
+                            Delete Post?
+                        </h3>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6' }}>
+                            Are you sure you want to delete this post? This action cannot be undone.
+                        </p>
+                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                            <button
+                                type="button"
+                                onClick={() => setShowDeleteConfirm(false)}
+                                disabled={isDeleting}
+                                style={{
+                                    padding: '0.75rem 1.5rem',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    background: 'rgba(255, 255, 255, 0.05)',
+                                    color: 'var(--text-secondary)',
+                                    cursor: isDeleting ? 'not-allowed' : 'pointer',
+                                    fontSize: '0.9rem',
+                                    fontWeight: 500,
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                                style={{
+                                    padding: '0.75rem 1.5rem',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(255, 0, 85, 0.7)',
+                                    background: isDeleting 
+                                        ? 'rgba(255, 0, 85, 0.3)' 
+                                        : 'linear-gradient(135deg, rgba(255, 0, 85, 0.3), rgba(255, 0, 85, 0.5))',
+                                    color: '#ffb3c7',
+                                    cursor: isDeleting ? 'not-allowed' : 'pointer',
+                                    fontSize: '0.9rem',
+                                    fontWeight: 600,
+                                    opacity: isDeleting ? 0.6 : 1,
+                                }}
+                            >
+                                {isDeleting ? 'Deleting...' : 'Delete Post'}
+                            </button>
+                        </div>
+                    </Card>
                 </div>
             )}
         </Card>

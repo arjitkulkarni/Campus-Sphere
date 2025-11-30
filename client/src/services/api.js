@@ -41,12 +41,14 @@ export const authAPI = {
     login: (email, password) => api.post('/auth/login', { email, password }),
     register: (name, email, password, role) => api.post('/auth/register', { name, email, password, role }),
     getMe: () => api.get('/auth/me'),
+    getUserById: (userId) => api.get(`/auth/user/${userId}`),
     updateProfile: (data) => api.put('/auth/profile', data),
 };
 
 export const postsAPI = {
     getAll: () => api.get('/posts'),
     getMine: () => api.get('/posts/me'),
+    getByUserId: (userId) => api.get(`/posts/user/${userId}`),
     getOne: (id) => api.get(`/posts/${id}`),
     create: (data) => api.post('/posts', data),
     update: (id, data) => api.put(`/posts/${id}`, data),

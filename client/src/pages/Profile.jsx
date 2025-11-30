@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Card from '../components/atoms/Card';
@@ -6,14 +6,16 @@ import Input from '../components/atoms/Input';
 import Button from '../components/atoms/Button';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { postsAPI } from '../services/api';
+import { authAPI, postsAPI, connectionsAPI } from '../services/api';
 import PostCard from '../components/molecules/PostCard';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 
 const Profile = () => {
     const { user, loading: authLoading, updateProfile } = useAuth();
-    const { error: showError } = useToast();
+    const { error: showError, success } = useToast();
     const navigate = useNavigate();
+    const location = useLocation();
+    const { userId } = useParams();
     const canvasRef = useRef(null);
     const particlesRef = useRef([]);
     const animationFrameRef = useRef(null);
@@ -26,20 +28,87 @@ const Profile = () => {
     const [loading, setLoading] = useState(false);
     const [myPosts, setMyPosts] = useState([]);
     const [myPostsLoading, setMyPostsLoading] = useState(true);
+    const [profileUser, setProfileUser] = useState(null);
+    const [profileLoading, setProfileLoading] = useState(true);
+    const [isConnected, setIsConnected] = useState(false);
+    const [isConnecting, setIsConnecting] = useState(false);
+    
+    // Determine if viewing own profile or another user's
+    const isOwnProfile = !userId || userId === user?._id || userId === user?.id;
+    const viewingUser = isOwnProfile ? user : profileUser;
 
-    const fetchMyPosts = async () => {
-        if (!user) return;
+    // Fetch profile user data
+    const fetchProfileUser = useCallback(async () => {
+        if (isOwnProfile) {
+            setProfileUser(user);
+            setProfileLoading(false);
+            return;
+        }
+        
+        if (!userId) return;
+        
+        setProfileLoading(true);
+        try {
+            const response = await authAPI.getUserById(userId);
+            setProfileUser(response.data);
+            
+            // Check if already connected
+            const connectionsRes = await connectionsAPI.getConnections();
+            const connected = connectionsRes.data.some(conn => {
+                const mentorId = conn.mentor?._id || conn.mentor || conn.mentorId;
+                const menteeId = conn.mentee?._id || conn.mentee || conn.menteeId || conn.student?._id || conn.student || conn.studentId;
+                return (mentorId === userId && menteeId === user?._id) || 
+                       (mentorId === user?._id && menteeId === userId);
+            });
+            setIsConnected(connected);
+        } catch (error) {
+            console.error('Error fetching profile user:', error);
+            if (showError) {
+                showError(error.response?.data?.message || 'Failed to load user profile');
+            }
+        } finally {
+            setProfileLoading(false);
+        }
+    }, [userId, user, isOwnProfile, showError]);
+
+    const fetchMyPosts = useCallback(async () => {
+        if (!viewingUser) return;
         setMyPostsLoading(true);
         try {
-            const response = await postsAPI.getMine();
+            let response;
+            if (isOwnProfile) {
+                response = await postsAPI.getMine();
+            } else {
+                response = await postsAPI.getByUserId(userId);
+            }
             setMyPosts(response.data || []);
         } catch (error) {
-            console.error('Error fetching my posts:', error);
+            console.error('Error fetching posts:', error);
             if (showError) {
-                showError(error.response?.data?.message || 'Failed to load your posts');
+                showError(error.response?.data?.message || 'Failed to load posts');
             }
         } finally {
             setMyPostsLoading(false);
+        }
+    }, [viewingUser, isOwnProfile, userId, showError]);
+    
+    const handleConnect = async () => {
+        if (!profileUser || isConnecting) return;
+        setIsConnecting(true);
+        try {
+            await connectionsAPI.requestConnection(profileUser._id);
+            success('Connection request sent! 🤝');
+            setIsConnected(true);
+            
+            // Navigate to feed and refresh following count
+            navigate('/feed?refresh=following');
+        } catch (error) {
+            console.error('Error requesting connection:', error);
+            if (showError) {
+                showError(error.response?.data?.message || 'Failed to send connection request');
+            }
+        } finally {
+            setIsConnecting(false);
         }
     };
 
@@ -127,14 +196,52 @@ const Profile = () => {
             return;
         }
         if (user) {
-            setFormData({
-                headline: user.headline || '',
-                bio: user.bio || '',
-                skills: user.skills?.join(', ') || '',
-            });
+            fetchProfileUser();
+        }
+    }, [user, authLoading, navigate, userId, fetchProfileUser]);
+    
+    useEffect(() => {
+        if (viewingUser) {
+            if (isOwnProfile) {
+                setFormData({
+                    headline: viewingUser.headline || '',
+                    bio: viewingUser.bio || '',
+                    skills: viewingUser.skills?.join(', ') || '',
+                });
+            }
             fetchMyPosts();
         }
-    }, [user, authLoading, navigate]);
+    }, [viewingUser, isOwnProfile, fetchMyPosts]);
+
+    // Refresh posts when navigating to profile page
+    useEffect(() => {
+        if (user && location.pathname === '/profile') {
+            fetchMyPosts();
+        }
+    }, [location.pathname, user, fetchMyPosts]);
+
+    // Refresh posts when page becomes visible (e.g., navigating back from Feed)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible' && user) {
+                fetchMyPosts();
+            }
+        };
+
+        const handleFocus = () => {
+            if (user) {
+                fetchMyPosts();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, [user, fetchMyPosts]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -159,7 +266,7 @@ const Profile = () => {
         }
     };
 
-    if (authLoading) {
+    if (authLoading || profileLoading) {
         return (
             <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <p>Loading...</p>
@@ -167,7 +274,7 @@ const Profile = () => {
         );
     }
 
-    if (!user) return null;
+    if (!user || !viewingUser) return null;
 
     return (
         <div
@@ -226,7 +333,7 @@ const Profile = () => {
                                 WebkitTextFillColor: 'transparent',
                             }}
                         >
-                            My Profile
+                            {isOwnProfile ? 'My Profile' : `${viewingUser.name}'s Profile`}
                         </h1>
 
                         <Card>
@@ -248,20 +355,34 @@ const Profile = () => {
                                         border: '3px solid rgba(0, 240, 255, 0.5)',
                                     }}
                                 >
-                                    {user.name?.charAt(0).toUpperCase() || 'U'}
+                                    {viewingUser.name?.charAt(0).toUpperCase() || 'U'}
                                 </div>
                                 <div style={{ flex: 1, minWidth: 0 }}>
-                                    <h2 style={{ margin: 0, marginBottom: '0.5rem' }}>{user.name}</h2>
-                                    <p style={{ margin: 0, color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.95rem' }}>
-                                        {user.email} • {user.role}
-                                    </p>
-                                    {user.headline && (
-                                        <p style={{ margin: '0.5rem 0', color: 'var(--text-primary)', fontWeight: 500 }}>
-                                            {user.headline}
-                                        </p>
-                                    )}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <h2 style={{ margin: 0, marginBottom: '0.5rem' }}>{viewingUser.name}</h2>
+                                            <p style={{ margin: 0, color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.95rem' }}>
+                                                {viewingUser.email} • {viewingUser.role}
+                                            </p>
+                                            {viewingUser.headline && (
+                                                <p style={{ margin: '0.5rem 0', color: 'var(--text-primary)', fontWeight: 500 }}>
+                                                    {viewingUser.headline}
+                                                </p>
+                                            )}
+                                        </div>
+                                        {!isOwnProfile && (
+                                            <Button 
+                                                variant={isConnected ? "glass" : "primary"}
+                                                onClick={handleConnect}
+                                                disabled={isConnecting || isConnected}
+                                                style={{ flexShrink: 0 }}
+                                            >
+                                                {isConnecting ? 'Connecting...' : isConnected ? '✓ Connected' : '🤝 Connect'}
+                                            </Button>
+                                        )}
+                                    </div>
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.75rem' }}>
-                                        {user.karma > 0 && (
+                                        {viewingUser.karma > 0 && (
                                             <div
                                                 style={{
                                                     display: 'inline-flex',
@@ -276,10 +397,10 @@ const Profile = () => {
                                                 }}
                                             >
                                                 <span>⭐</span>
-                                                <span>{user.karma} Karma points</span>
+                                                <span>{viewingUser.karma} Karma points</span>
                                             </div>
                                         )}
-                                        {user.isMentor && (
+                                        {viewingUser.isMentor && (
                                             <div
                                                 style={{
                                                     padding: '0.4rem 0.9rem',
@@ -293,7 +414,7 @@ const Profile = () => {
                                                 🤝 Mentor
                                             </div>
                                         )}
-                                        {user.createdAt && (
+                                        {viewingUser.createdAt && (
                                             <div
                                                 style={{
                                                     padding: '0.4rem 0.9rem',
@@ -304,7 +425,7 @@ const Profile = () => {
                                                     color: 'var(--text-secondary)',
                                                 }}
                                             >
-                                                Joined {new Date(user.createdAt).toLocaleDateString()}
+                                                Joined {new Date(viewingUser.createdAt).toLocaleDateString()}
                                             </div>
                                         )}
                                     </div>
@@ -312,19 +433,19 @@ const Profile = () => {
                             </div>
 
                             {/* Bio */}
-                            {user.bio && !editing && (
+                            {viewingUser.bio && (!editing || !isOwnProfile) && (
                                 <div style={{ marginBottom: '1.5rem' }}>
                                     <h3 style={{ marginBottom: '0.5rem' }}>Bio</h3>
-                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{user.bio}</p>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>{viewingUser.bio}</p>
                                 </div>
                             )}
 
                             {/* Skills */}
-                            {user.skills && user.skills.length > 0 && !editing && (
+                            {viewingUser.skills && viewingUser.skills.length > 0 && (!editing || !isOwnProfile) && (
                                 <div style={{ marginBottom: '1.5rem' }}>
                                     <h3 style={{ marginBottom: '0.5rem' }}>Skills</h3>
                                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                        {user.skills.map((skill, idx) => (
+                                        {viewingUser.skills.map((skill, idx) => (
                                             <span
                                                 key={idx}
                                                 style={{
@@ -344,46 +465,46 @@ const Profile = () => {
                             )}
 
                             {/* Academic Info */}
-                            {(user.college || user.graduationYear) && !editing && (
+                            {(viewingUser.college || viewingUser.graduationYear) && (!editing || !isOwnProfile) && (
                                 <div style={{ marginBottom: '1.5rem' }}>
                                     <h3 style={{ marginBottom: '0.5rem' }}>Academic Info</h3>
-                                    {user.college && (
+                                    {viewingUser.college && (
                                         <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0' }}>
-                                            College: {user.college}
+                                            College: {viewingUser.college}
                                         </p>
                                     )}
-                                    {user.graduationYear && (
+                                    {viewingUser.graduationYear && (
                                         <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0' }}>
-                                            Graduation year: {user.graduationYear}
+                                            Graduation year: {viewingUser.graduationYear}
                                         </p>
                                     )}
                                 </div>
                             )}
 
                             {/* Professional Info (primarily for alumni) */}
-                            {(user.company || user.jobTitle || typeof user.isEmployed === 'boolean') && !editing && (
+                            {(viewingUser.company || viewingUser.jobTitle || typeof viewingUser.isEmployed === 'boolean') && (!editing || !isOwnProfile) && (
                                 <div style={{ marginBottom: '1.5rem' }}>
                                     <h3 style={{ marginBottom: '0.5rem' }}>Professional Info</h3>
-                                    {typeof user.isEmployed === 'boolean' && (
+                                    {typeof viewingUser.isEmployed === 'boolean' && (
                                         <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0' }}>
-                                            Status: {user.isEmployed ? 'Employed' : 'Not currently employed'}
+                                            Status: {viewingUser.isEmployed ? 'Employed' : 'Not currently employed'}
                                         </p>
                                     )}
-                                    {user.company && (
+                                    {viewingUser.company && (
                                         <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0' }}>
-                                            Company: {user.company}
+                                            Company: {viewingUser.company}
                                         </p>
                                     )}
-                                    {user.jobTitle && (
+                                    {viewingUser.jobTitle && (
                                         <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0' }}>
-                                            Title: {user.jobTitle}
+                                            Title: {viewingUser.jobTitle}
                                         </p>
                                     )}
                                 </div>
                             )}
 
-                            {/* Edit mode for headline, bio and skills */}
-                            {editing ? (
+                            {/* Edit mode for headline, bio and skills - only for own profile */}
+                            {editing && isOwnProfile ? (
                                 <form onSubmit={handleSubmit}>
                                     <Input
                                         label="Headline"
@@ -430,27 +551,44 @@ const Profile = () => {
                                         </Button>
                                     </div>
                                 </form>
-                            ) : (
+                            ) : isOwnProfile ? (
                                 <Button variant="primary" onClick={() => setEditing(true)}>
                                     Edit Profile
                                 </Button>
-                            )}
+                            ) : null}
                         </Card>
 
                         <div style={{ marginTop: '2.5rem' }}>
-                            <h2
-                                style={{
-                                    marginBottom: '1rem',
-                                    fontSize: '1.25rem',
-                                    color: 'var(--text-primary)',
-                                }}
-                            >
-                                My Posts
-                            </h2>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                <h2
+                                    style={{
+                                        margin: 0,
+                                        fontSize: '1.25rem',
+                                        color: 'var(--text-primary)',
+                                    }}
+                                >
+                                    {isOwnProfile ? 'My Posts' : `${viewingUser.name}'s Posts`}
+                                </h2>
+                                {isOwnProfile && (
+                                    <Button 
+                                        variant="glass" 
+                                        onClick={fetchMyPosts}
+                                        disabled={myPostsLoading}
+                                        style={{ 
+                                            padding: '0.5rem 1rem',
+                                            fontSize: '0.875rem',
+                                            minWidth: 'auto'
+                                        }}
+                                        title="Refresh posts"
+                                    >
+                                        {myPostsLoading ? '⟳' : '↻'} Refresh
+                                    </Button>
+                                )}
+                            </div>
 
                             {myPostsLoading ? (
                                 <p style={{ color: 'var(--text-secondary)' }}>
-                                    Loading your posts...
+                                    Loading posts...
                                 </p>
                             ) : myPosts.length === 0 ? (
                                 <Card>
@@ -463,9 +601,11 @@ const Profile = () => {
                                         >
                                             You haven’t posted anything yet.
                                         </p>
-                                        <Button variant="primary" onClick={() => navigate('/feed')}>
-                                            Go to feed to create your first post
-                                        </Button>
+                                        {isOwnProfile && (
+                                            <Button variant="primary" onClick={() => navigate('/feed')}>
+                                                Go to feed to create your first post
+                                            </Button>
+                                        )}
                                     </div>
                                 </Card>
                             ) : (
@@ -474,7 +614,7 @@ const Profile = () => {
                                         key={post._id}
                                         post={post}
                                         onUpdate={fetchMyPosts}
-                                        enableOwnerActions
+                                        enableOwnerActions={isOwnProfile}
                                     />
                                 ))
                             )}
