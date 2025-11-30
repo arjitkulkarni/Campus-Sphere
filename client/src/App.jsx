@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -9,11 +10,13 @@ import Onboarding from './pages/Onboarding';
 import Feed from './pages/Feed';
 import Mentorship from './pages/Mentorship';
 import Opportunities from './pages/Opportunities';
+import Profile from './pages/Profile';
 
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <ToastProvider>
+        <Router>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -50,8 +53,17 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } 
+          />
         </Routes>
       </Router>
+      </ToastProvider>
     </AuthProvider>
   );
 }

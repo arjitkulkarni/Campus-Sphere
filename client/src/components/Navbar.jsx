@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Button from './atoms/Button';
@@ -7,6 +7,15 @@ const Navbar = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 20);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const isActive = (path) => location.pathname === path;
 
@@ -16,81 +25,52 @@ const Navbar = () => {
     };
 
     return (
-        <nav style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            padding: '1rem 2rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            background: 'rgba(10, 10, 15, 0.8)',
-            backdropFilter: 'blur(10px)',
-            borderBottom: '1px solid var(--glass-border)',
-            zIndex: 1000
-        }}>
-            <Link to="/" style={{ textDecoration: 'none' }}>
-                <h1 style={{ 
-                    fontSize: '1.5rem', 
-                    background: 'linear-gradient(to right, var(--primary), var(--secondary))', 
-                    WebkitBackgroundClip: 'text', 
-                    WebkitTextFillColor: 'transparent',
-                    margin: 0
-                }}>
-                    CampusSphere
-                </h1>
+        <nav className={`navbar-enhanced ${scrolled ? 'navbar-scrolled' : ''}`}>
+            <Link to={user ? '/feed' : '/'} className="navbar-logo">
+                <div className="logo-icon">⚡</div>
+                <h1 className="logo-text">CampusSphere</h1>
             </Link>
 
             {user && (
-                <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+                <div className="navbar-links">
                     <Link 
                         to="/feed" 
-                        style={{ 
-                            color: isActive('/feed') ? 'var(--primary)' : 'var(--text-primary)',
-                            textDecoration: 'none',
-                            transition: 'var(--transition-fast)',
-                            borderBottom: isActive('/feed') ? '2px solid var(--primary)' : '2px solid transparent',
-                            paddingBottom: '0.25rem'
-                        }}
+                        className={`navbar-link ${isActive('/feed') ? 'navbar-link-active' : ''}`}
                     >
-                        Feed
+                        <span className="link-icon">📰</span>
+                        <span className="link-text">Feed</span>
+                        {isActive('/feed') && <span className="link-indicator"></span>}
                     </Link>
                     <Link 
                         to="/mentorship" 
-                        style={{ 
-                            color: isActive('/mentorship') ? 'var(--primary)' : 'var(--text-primary)',
-                            textDecoration: 'none',
-                            transition: 'var(--transition-fast)',
-                            borderBottom: isActive('/mentorship') ? '2px solid var(--primary)' : '2px solid transparent',
-                            paddingBottom: '0.25rem'
-                        }}
+                        className={`navbar-link ${isActive('/mentorship') ? 'navbar-link-active' : ''}`}
                     >
-                        Mentorship
+                        <span className="link-icon">🤝</span>
+                        <span className="link-text">Mentorship</span>
+                        {isActive('/mentorship') && <span className="link-indicator"></span>}
                     </Link>
                     <Link 
                         to="/opportunities" 
-                        style={{ 
-                            color: isActive('/opportunities') ? 'var(--primary)' : 'var(--text-primary)',
-                            textDecoration: 'none',
-                            transition: 'var(--transition-fast)',
-                            borderBottom: isActive('/opportunities') ? '2px solid var(--primary)' : '2px solid transparent',
-                            paddingBottom: '0.25rem'
-                        }}
+                        className={`navbar-link ${isActive('/opportunities') ? 'navbar-link-active' : ''}`}
                     >
-                        Opportunities
+                        <span className="link-icon">💼</span>
+                        <span className="link-text">Opportunities</span>
+                        {isActive('/opportunities') && <span className="link-indicator"></span>}
                     </Link>
                 </div>
             )}
 
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <div className="navbar-actions">
                 {user ? (
                     <>
-                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                            {user.name}
-                        </span>
-                        <Button variant="glass" onClick={handleLogout}>
-                            Logout
+                        <div className="navbar-user">
+                            <div className="user-avatar-small">
+                                {user.name?.charAt(0).toUpperCase() || 'U'}
+                            </div>
+                            <span className="user-name">{user.name}</span>
+                        </div>
+                        <Button variant="glass" onClick={handleLogout} className="logout-btn">
+                            <span>Logout</span>
                         </Button>
                     </>
                 ) : (
@@ -99,7 +79,10 @@ const Navbar = () => {
                             <Button variant="glass">Login</Button>
                         </Link>
                         <Link to="/register">
-                            <Button variant="primary">Join Now</Button>
+                            <Button variant="primary" className="join-btn">
+                                <span>Join Now</span>
+                                <span className="btn-shine"></span>
+                            </Button>
                         </Link>
                     </>
                 )}

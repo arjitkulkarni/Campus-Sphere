@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00f0ff;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#7000ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ff0055;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%">
+      <stop offset="0%" style="stop-color:#00f0ff;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#7000ff;stop-opacity:0.4" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Background circle with gradient -->
+  <circle cx="50" cy="50" r="48" fill="url(#grad1)"/>
+  
+  <!-- Inner glow -->
+  <circle cx="50" cy="50" r="40" fill="url(#glow)" opacity="0.6"/>
+  
+  <!-- Letter C for CampusSphere - simplified and bold -->
+  <path d="M 35 25 
+           Q 25 25 25 35 
+           L 25 50 
+           Q 25 65 35 65 
+           L 50 65 
+           Q 60 65 60 55 
+           L 60 50 
+           Q 60 45 55 45 
+           L 40 45 
+           Q 35 45 35 50 
+           L 35 35 
+           Q 35 30 40 30 
+           L 55 30 
+           Q 65 30 65 40 
+           L 65 50 
+           Q 65 60 55 60 
+           L 35 60 
+           Q 20 60 20 50 
+           L 20 35 
+           Q 20 25 35 25 Z" 
+        fill="white" 
+        opacity="0.95"
+        transform="translate(15, 15)"/>
+  
+  <!-- Small decorative dots -->
+  <circle cx="25" cy="25" r="2.5" fill="white" opacity="0.7"/>
+  <circle cx="75" cy="25" r="2.5" fill="white" opacity="0.7"/>
+  <circle cx="25" cy="75" r="2.5" fill="white" opacity="0.7"/>
+  <circle cx="75" cy="75" r="2.5" fill="white" opacity="0.7"/>
+</svg>

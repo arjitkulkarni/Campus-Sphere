@@ -5,6 +5,7 @@ const Button = ({ children, variant = 'primary', className = '', disabled, ...pr
     const variantClasses = {
         primary: 'btn-primary',
         glass: 'btn-glass',
+        success: 'btn-success',
     };
 
     return (
