@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { authAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Card from '../components/atoms/Card';
 import Button from '../components/atoms/Button';
 
 const Events = () => {
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState({ type: '' });
@@ -101,6 +102,21 @@ const Events = () => {
             competition: '🏆',
         };
         return icons[type] || '📅';
+    };
+
+    const handleRegister = async (registrationLink) => {
+        if (registrationLink) {
+            window.open(registrationLink, '_blank');
+        }
+        try {
+            // Small karma boost for joining an event
+            await authAPI.addKarma(8, 'event_register');
+            if (refreshUser) {
+                await refreshUser();
+            }
+        } catch (error) {
+            console.error('Event register karma error:', error);
+        }
     };
 
     if (loading) {
@@ -331,7 +347,7 @@ const Events = () => {
                                                 {event.registrationLink && (
                                                     <Button 
                                                         variant="primary" 
-                                                        onClick={() => window.open(event.registrationLink, '_blank')}
+                                                        onClick={() => handleRegister(event.registrationLink)}
                                                         style={{ width: '100%', maxWidth: '300px' }}
                                                     >
                                                         Register Now →
@@ -352,3 +368,5 @@ const Events = () => {
 };
 
 export default Events;
+
+

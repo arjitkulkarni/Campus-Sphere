@@ -207,7 +207,19 @@ exports.createPost = async (req, res) => {
             media: media || [],
             tags: tags || [],
         });
-        
+
+        // Increment user karma for creating a post
+        try {
+            const user = users.findById(req.user.id);
+            if (user) {
+                const currentKarma = typeof user.karma === 'number' ? user.karma : 0;
+                const updatedKarma = currentKarma + 10; // +10 karma per post
+                users.update(req.user.id, { karma: updatedKarma });
+            }
+        } catch (karmaError) {
+            console.error('CreatePost karma update error:', karmaError);
+        }
+
         const populatedPost = populatePost(post);
         res.status(201).json(populatedPost);
     } catch (error) {
@@ -228,8 +240,9 @@ exports.updatePost = async (req, res) => {
         }
         
         // Check if user owns the post
+        // Use 403 (Forbidden) so the frontend's 401 handler only runs on real auth failures
         if (post.user !== req.user.id && post.user?._id !== req.user.id) {
-            return res.status(401).json({ message: 'Not authorized' });
+            return res.status(403).json({ message: 'Not authorized to update this post' });
         }
         
         const updatedPost = posts.update(req.params.id, req.body);
@@ -253,8 +266,9 @@ exports.deletePost = async (req, res) => {
         }
         
         // Check if user owns the post
+        // Use 403 (Forbidden) so the frontend's 401 handler only runs on real auth failures
         if (post.user !== req.user.id && post.user?._id !== req.user.id) {
-            return res.status(401).json({ message: 'Not authorized' });
+            return res.status(403).json({ message: 'Not authorized to delete this post' });
         }
         
         posts.delete(req.params.id);

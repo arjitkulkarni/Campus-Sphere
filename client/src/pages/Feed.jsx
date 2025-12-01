@@ -11,7 +11,7 @@ import Card from '../components/atoms/Card';
 import Button from '../components/atoms/Button';
 
 const Feed = () => {
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     const { success, error: showError } = useToast();
     const navigate = useNavigate();
     const location = useLocation();
@@ -307,6 +307,9 @@ const Feed = () => {
             setNewPost({ content: '', type: 'general', tags: '' });
             setShowCreatePost(false);
             success('Post created successfully! 🎉');
+            if (refreshUser) {
+                await refreshUser();
+            }
             fetchAllData();
         } catch (err) {
             console.error('Error creating post:', err);
@@ -628,16 +631,26 @@ const Feed = () => {
                                         <div className="karma-glow"></div>
                                     </div>
                                     <div className="karma-content">
-                                        <div className="karma-value-enhanced">{user?.karma || 0}</div>
+                                        <div className="karma-value-enhanced">{user?.karma ?? 0}</div>
                                         <div className="karma-label-enhanced">KARMA POINTS</div>
                                         {user?.karma > 0 && (
                                             <div className="karma-progress">
                                                 <div 
                                                     className="karma-progress-bar"
-                                                    style={{ width: `${Math.min(100, (user.karma / 200) * 100)}%` }}
+                                                    style={{ width: `${Math.min(100, ((user?.karma ?? 0) / 200) * 100)}%` }}
                                                 ></div>
                                             </div>
                                         )}
+                                    </div>
+                                    <div className="karma-tooltip">
+                                        <div className="karma-tooltip-title">How to increase your karma</div>
+                                        <ul className="karma-tooltip-list">
+                                            <li>Post regularly and share valuable resources.</li>
+                                            <li>Engage with others by commenting and reacting.</li>
+                                            <li>Help peers by answering questions and giving feedback.</li>
+                                            <li>Attend mentorship sessions and show up prepared.</li>
+                                            <li>Share new opportunities, events, and wins with your campus.</li>
+                                        </ul>
                                     </div>
                                 </div>
 

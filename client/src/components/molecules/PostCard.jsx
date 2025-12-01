@@ -15,10 +15,14 @@ const PostCard = ({ post, onUpdate, enableOwnerActions = false }) => {
     const currentUserId = user?._id || user?.id;
     
     // Check if this post belongs to the current user
-    const isCurrentUserPost = user && currentUserId && (
-        postUserId === currentUserId || 
-        String(postUserId) === String(currentUserId) ||
-        (post.user?._id && String(post.user._id) === String(currentUserId))
+    const isCurrentUserPost = !!user && (
+        // Normal ID based checks
+        (currentUserId &&
+            (postUserId === currentUserId ||
+                String(postUserId) === String(currentUserId) ||
+                (post.user?._id && String(post.user._id) === String(currentUserId)))) ||
+        // Fallback for legacy posts that may not have proper IDs attached
+        (post.user?.name && user.name && post.user.name === user.name)
     );
     
     // Always allow clicking on profile (for any user)
@@ -49,10 +53,10 @@ const PostCard = ({ post, onUpdate, enableOwnerActions = false }) => {
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const isOwner =
-        enableOwnerActions &&
-        !!user &&
-        (post.user?._id === user._id || post.user === user._id || post.userId === user._id);
+
+    // Treat the current user as owner when this post belongs to them
+    // and the parent component has explicitly enabled owner actions.
+    const isOwner = enableOwnerActions && isCurrentUserPost;
 
     const handleLike = async () => {
         if (isLiking) return;

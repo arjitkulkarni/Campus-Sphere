@@ -204,3 +204,34 @@ exports.updateProfile = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// @desc    Increment user karma by a given amount
+// @route   POST /api/auth/karma
+// @access  Private
+exports.addKarma = async (req, res) => {
+    try {
+        const user = users.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const rawAmount = req.body.amount;
+        const amount = Number.isFinite(rawAmount) ? rawAmount : parseFloat(rawAmount);
+        const increment = Number.isFinite(amount) ? amount : 0;
+
+        const currentKarma = typeof user.karma === 'number' ? user.karma : 0;
+        const updatedUser = users.update(req.user.id, {
+            karma: currentKarma + increment,
+        });
+
+        if (!updatedUser) {
+            return res.status(400).json({ message: 'Failed to update karma' });
+        }
+
+        const { password: _, ...userResponse } = updatedUser;
+        res.status(200).json(userResponse);
+    } catch (error) {
+        console.error('AddKarma error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};

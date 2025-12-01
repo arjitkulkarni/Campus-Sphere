@@ -159,6 +159,19 @@ exports.applyToOpportunity = async (req, res) => {
         
         const updatedApplicants = [...applicants, req.user.id];
         const updatedOpp = opportunities.update(req.params.id, { applicants: updatedApplicants });
+
+        // Increment user karma for applying to an opportunity
+        try {
+            const user = users.findById(req.user.id);
+            if (user) {
+                const currentKarma = typeof user.karma === 'number' ? user.karma : 0;
+                const updatedKarma = currentKarma + 15; // +15 karma per application
+                users.update(req.user.id, { karma: updatedKarma });
+            }
+        } catch (karmaError) {
+            console.error('ApplyToOpportunity karma update error:', karmaError);
+        }
+
         const populatedOpp = populateOpportunity(updatedOpp);
         res.status(200).json(populatedOpp);
     } catch (error) {
