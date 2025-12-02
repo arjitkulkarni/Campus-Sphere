@@ -12,6 +12,14 @@ import Mentorship from './pages/Mentorship';
 import Opportunities from './pages/Opportunities';
 import Events from './pages/Events';
 import Profile from './pages/Profile';
+import FacultyTools from './pages/FacultyTools';
+import StudentAnalytics from './pages/faculty/StudentAnalytics';
+import AlumniTracking from './pages/faculty/AlumniTracking';
+import OpportunityManagement from './pages/faculty/OpportunityManagement';
+import EventManagement from './pages/faculty/EventManagement';
+import StudentSupport from './pages/faculty/StudentSupport';
+import ProjectRepository from './pages/faculty/ProjectRepository';
+import AlumniNetwork from './pages/AlumniNetwork';
 
 function App() {
   return (
@@ -75,6 +83,70 @@ function App() {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/faculty-tools" 
+            element={
+              <ProtectedRoute>
+                <FacultyTools />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/faculty-tools/student-analytics" 
+            element={
+              <ProtectedRoute>
+                <StudentAnalytics />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/faculty-tools/alumni-tracking" 
+            element={
+              <ProtectedRoute>
+                <AlumniTracking />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/faculty-tools/opportunity-management" 
+            element={
+              <ProtectedRoute>
+                <OpportunityManagement />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/faculty-tools/event-management" 
+            element={
+              <ProtectedRoute>
+                <EventManagement />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/faculty-tools/student-support" 
+            element={
+              <ProtectedRoute>
+                <StudentSupport />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/faculty-tools/project-repository" 
+            element={
+              <ProtectedRoute>
+                <ProjectRepository />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/alumni-network" 
+            element={
+              <ProtectedRoute>
+                <AlumniNetwork />
               </ProtectedRoute>
             } 
           />

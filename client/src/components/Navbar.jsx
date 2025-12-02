@@ -59,6 +59,26 @@ const Navbar = () => {
                             {isActive('/opportunities') && <span className="link-indicator"></span>}
                         </Link>
                     )}
+                    {user?.role === 'alumni' && (
+                        <Link 
+                            to="/alumni-network" 
+                            className={`navbar-link ${isActive('/alumni-network') ? 'navbar-link-active' : ''}`}
+                        >
+                            <span className="link-icon">🌐</span>
+                            <span className="link-text">Alumni Network</span>
+                            {isActive('/alumni-network') && <span className="link-indicator"></span>}
+                        </Link>
+                    )}
+                    {user?.role === 'faculty' && (
+                        <Link 
+                            to="/faculty-tools" 
+                            className={`navbar-link ${isActive('/faculty-tools') || location.pathname.startsWith('/faculty-tools/') ? 'navbar-link-active' : ''}`}
+                        >
+                            <span className="link-icon">⚙️</span>
+                            <span className="link-text">Other</span>
+                            {(isActive('/faculty-tools') || location.pathname.startsWith('/faculty-tools/')) && <span className="link-indicator"></span>}
+                        </Link>
+                    )}
                 </div>
             )}
 
