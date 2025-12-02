@@ -61,8 +61,15 @@ export const AuthProvider = ({ children }) => {
                 throw customError;
             } else if (error.request) {
                 // Request was made but no response received
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-                throw new Error(`Unable to connect to server. Please check if the backend is running on ${apiUrl}`);
+                const apiUrl = import.meta.env.VITE_API_URL || 
+                              (import.meta.env.PROD ? window.location.origin + '/api' : 'http://localhost:5000/api');
+                // Extract base URL without /api for display, or show full URL if it's absolute
+                let displayUrl = apiUrl;
+                if (apiUrl.startsWith('/')) {
+                    displayUrl = window.location.origin + apiUrl;
+                }
+                displayUrl = displayUrl.replace('/api', '');
+                throw new Error(`Unable to connect to server. Please check if the backend is running on ${displayUrl}`);
             } else {
                 // Error in setting up the request
                 throw new Error(error.message || 'Registration failed');

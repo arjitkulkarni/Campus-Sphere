@@ -1179,7 +1179,7 @@ a:hover {
 
 .form-input {
   width: 100%;
-  padding: 1rem 1.25rem;
+  padding: 1rem 3rem 1rem 3rem;
   background: rgba(15, 15, 25, 0.95);
   border: 1.5px solid var(--glass-border);
   border-radius: 12px;

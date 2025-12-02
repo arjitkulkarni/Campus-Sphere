@@ -118,18 +118,15 @@ const Register = () => {
             navigate('/onboarding');
         } catch (err) {
             console.error('Registration error:', err);
-            // Show more detailed error message
-            let errorMessage = 'Registration failed';
-            if (err.response) {
-                // Server responded with error
-                errorMessage = err.response.data?.message || err.response.data?.error || errorMessage;
-            } else if (err.request) {
-                // Request was made but no response received
-                errorMessage = 'Unable to connect to server. Please check if the backend is running.';
-            } else {
-                // Error in setting up the request
-                errorMessage = err.message || errorMessage;
+            // Use error message from AuthContext (which handles API URL dynamically)
+            // If no message, fall back to checking response/request
+            let errorMessage = err.message || 'Registration failed';
+            
+            // If error has response data, prefer that message
+            if (err.response?.data?.message || err.response?.data?.error) {
+                errorMessage = err.response.data.message || err.response.data.error;
             }
+            
             setError(errorMessage);
             setLoading(false);
         }
