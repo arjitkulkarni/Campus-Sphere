@@ -15,7 +15,7 @@ const Input = ({ label, error, ...props }) => {
                     background: 'rgba(255, 255, 255, 0.05)',
                     border: error ? '1px solid var(--error)' : '1px solid var(--glass-border)',
                     borderRadius: '8px',
-                    color: 'white',
+                    color: '#ffffff',
                     outline: 'none',
                     transition: 'var(--transition-fast)',
                 }}

@@ -1179,11 +1179,11 @@ a:hover {
 
 .form-input {
   width: 100%;
-  padding: 1rem 3rem 1rem 3rem;
+  padding: 1rem 1.25rem;
   background: rgba(15, 15, 25, 0.95);
   border: 1.5px solid var(--glass-border);
   border-radius: 12px;
-  color: var(--text-primary);
+  color: #ffffff;
   font-size: 1rem;
   font-weight: 500;
   outline: none;
@@ -1197,17 +1197,17 @@ a:hover {
   box-shadow: 
     0 0 0 3px rgba(0, 240, 255, 0.15),
     0 0 20px rgba(0, 240, 255, 0.2);
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
 .form-input:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .form-input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.8);
   opacity: 1;
   font-weight: 400;
 }
@@ -4991,7 +4991,7 @@ canvas {
   background: rgba(15, 15, 25, 0.95);
   border: 1.5px solid var(--glass-border);
   border-radius: 14px;
-  color: var(--text-primary);
+  color: #ffffff;
   font-size: clamp(0.9375rem, 1.1vw, 1.0625rem);
   outline: none;
   transition: all 0.3s;
@@ -5004,12 +5004,12 @@ canvas {
 .form-input select,
 select.form-input {
   background-color: rgba(15, 15, 25, 0.95) !important;
-  color: var(--text-primary) !important;
+  color: #ffffff !important;
   cursor: pointer;
 }
 
 .form-input::placeholder {
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.8);
   opacity: 1;
   font-weight: 400;
 }
@@ -5020,11 +5020,11 @@ select.form-input {
   box-shadow: 
     0 0 0 3px rgba(0, 240, 255, 0.15),
     0 0 20px rgba(0, 240, 255, 0.2);
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
 .form-input:focus::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .events-banner {

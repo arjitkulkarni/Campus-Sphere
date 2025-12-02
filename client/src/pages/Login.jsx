@@ -205,7 +205,6 @@ const Login = () => {
                                     required
                                     disabled={loading}
                                 />
-                                <span className="input-icon">✉️</span>
                             </div>
                         </div>
 

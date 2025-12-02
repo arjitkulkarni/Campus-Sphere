@@ -229,7 +229,6 @@ const Register = () => {
                                     required
                                     disabled={loading}
                                 />
-                                <span className="input-icon">👤</span>
                             </div>
                         </div>
 
@@ -245,7 +244,6 @@ const Register = () => {
                                     required
                                     disabled={loading}
                                 />
-                                <span className="input-icon">✉️</span>
                             </div>
                         </div>
 
