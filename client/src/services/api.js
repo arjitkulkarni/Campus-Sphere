@@ -43,7 +43,6 @@ export const authAPI = {
     getMe: () => api.get('/auth/me'),
     getUserById: (userId) => api.get(`/auth/user/${userId}`),
     updateProfile: (data) => api.put('/auth/profile', data),
-    addKarma: (amount, reason) => api.post('/auth/karma', { amount, reason }),
 };
 
 export const postsAPI = {

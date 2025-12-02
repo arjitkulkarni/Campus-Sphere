@@ -49,14 +49,16 @@ const Navbar = () => {
                         <span className="link-text">Mentorship</span>
                         {isActive('/mentorship') && <span className="link-indicator"></span>}
                     </Link>
-                    <Link 
-                        to="/opportunities" 
-                        className={`navbar-link ${isActive('/opportunities') ? 'navbar-link-active' : ''}`}
-                    >
-                        <span className="link-icon">💼</span>
-                        <span className="link-text">Opportunities</span>
-                        {isActive('/opportunities') && <span className="link-indicator"></span>}
-                    </Link>
+                    {user?.role !== 'faculty' && (
+                        <Link 
+                            to="/opportunities" 
+                            className={`navbar-link ${isActive('/opportunities') ? 'navbar-link-active' : ''}`}
+                        >
+                            <span className="link-icon">💼</span>
+                            <span className="link-text">Opportunities</span>
+                            {isActive('/opportunities') && <span className="link-indicator"></span>}
+                        </Link>
+                    )}
                 </div>
             )}
 

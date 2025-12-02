@@ -1,35 +1,101 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { connectionsAPI } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import Card from '../atoms/Card';
 import Button from '../atoms/Button';
 
-const MentorCard = ({ mentor, onUpdate }) => {
+const MentorCard = ({ mentor, onUpdate, existingConnections = [] }) => {
     const { user } = useAuth();
     const { success, error: showError } = useToast();
+    const navigate = useNavigate();
     const [isRequesting, setIsRequesting] = useState(false);
     const [showFullBio, setShowFullBio] = useState(false);
-    const [requested, setRequested] = useState(false);
+    const [connectionStatus, setConnectionStatus] = useState(null); // null, 'pending', 'accepted', 'rejected'
+
+    // Check if there's an existing connection
+    useEffect(() => {
+        if (!mentor?._id && !mentor?.id) return;
+        if (!user?._id && !user?.id) return;
+        if (!existingConnections || existingConnections.length === 0) {
+            setConnectionStatus(null);
+            return;
+        }
+        
+        const mentorUserId = mentor._id || mentor.id;
+        const currentUserId = user._id || user.id;
+        
+        const existingConnection = existingConnections.find(conn => {
+            if (!conn) return false;
+            const mentorId = conn.mentor?._id || conn.mentor || conn.mentorId;
+            const menteeId = conn.mentee?._id || conn.mentee || conn.menteeId || conn.student?._id || conn.student || conn.studentId;
+            
+            // Check if this connection involves the current mentor and user
+            return (mentorId === mentorUserId && menteeId === currentUserId) ||
+                   (mentorId === currentUserId && menteeId === mentorUserId);
+        });
+
+        if (existingConnection) {
+            setConnectionStatus(existingConnection.status || 'pending');
+        } else {
+            setConnectionStatus(null);
+        }
+    }, [mentor, user, existingConnections]);
 
     const handleRequestConnection = async () => {
-        if (isRequesting || requested) return;
+        if (isRequesting || connectionStatus === 'pending' || connectionStatus === 'accepted') return;
+        
+        // Don't allow requesting if user is viewing their own profile
+        const mentorUserId = mentor._id || mentor.id;
+        const currentUserId = user?._id || user?.id;
+        if (mentorUserId === currentUserId) {
+            showError('You cannot request mentorship from yourself');
+            return;
+        }
+
+        if (!mentorUserId) {
+            showError('Invalid mentor information');
+            return;
+        }
+
         setIsRequesting(true);
         try {
-            await connectionsAPI.requestConnection(mentor._id);
-            setRequested(true);
+            await connectionsAPI.requestConnection(mentorUserId);
+            setConnectionStatus('pending');
             success('Mentorship request sent successfully! 🎉');
             if (onUpdate) onUpdate();
         } catch (err) {
             console.error('Error requesting connection:', err);
-            showError(err.response?.data?.message || 'Failed to send request');
+            const errorMessage = err.response?.data?.message || 'Failed to send request';
+            showError(errorMessage);
+            // Reset status on error
+            setConnectionStatus(null);
         } finally {
             setIsRequesting(false);
         }
     };
 
+    const handleViewProfile = () => {
+        const mentorUserId = mentor?._id || mentor?.id;
+        if (!mentorUserId) {
+            navigate('/profile');
+            return;
+        }
+        navigate(`/profile/${mentorUserId}`);
+    };
+
+    // Safety check - don't render if mentor data is invalid
+    if (!mentor || (!mentor._id && !mentor.id)) {
+        return null;
+    }
+
     const bioPreview = mentor.bio?.substring(0, 120);
     const shouldTruncate = mentor.bio && mentor.bio.length > 120;
+    const mentorName = mentor.name || 'Mentor';
+    const mentorId = mentor._id || mentor.id;
+    const currentUserId = user?._id || user?.id;
+    const isOwnProfile = mentorId === currentUserId;
 
     return (
         <Card className="mentor-card-enhanced" style={{ marginBottom: '2rem', position: 'relative', overflow: 'hidden' }}>
@@ -40,13 +106,13 @@ const MentorCard = ({ mentor, onUpdate }) => {
                 {/* Avatar Section */}
                 <div className="mentor-avatar-section">
                     <div className="mentor-avatar-large">
-                        {mentor.name?.charAt(0).toUpperCase() || 'M'}
+                        {mentorName.charAt(0).toUpperCase()}
                     </div>
                     <div className="mentor-status-badge">
                         <div className="status-dot"></div>
                         <span>Available</span>
                     </div>
-                    {mentor.karma !== undefined && (
+                    {(mentor.karma !== undefined && mentor.karma !== null) && (
                         <div className="mentor-karma-badge">
                             <span>⭐</span>
                             <span>{mentor.karma}</span>
@@ -62,13 +128,13 @@ const MentorCard = ({ mentor, onUpdate }) => {
                             margin: '0 0 0.5rem 0', 
                             fontSize: '1.25rem',
                             fontWeight: 700,
-                            background: mentor.karma > 100 
+                            background: (mentor.karma && mentor.karma > 100)
                                 ? 'linear-gradient(135deg, var(--primary), var(--secondary))'
                                 : 'none',
-                            WebkitBackgroundClip: mentor.karma > 100 ? 'text' : 'none',
-                            WebkitTextFillColor: mentor.karma > 100 ? 'transparent' : 'var(--text-primary)',
+                            WebkitBackgroundClip: (mentor.karma && mentor.karma > 100) ? 'text' : 'none',
+                            WebkitTextFillColor: (mentor.karma && mentor.karma > 100) ? 'transparent' : 'var(--text-primary)',
                         }}>
-                            {mentor.name}
+                            {mentorName}
                         </h3>
                         <div style={{ 
                             color: 'var(--primary)', 
@@ -169,33 +235,41 @@ const MentorCard = ({ mentor, onUpdate }) => {
 
                     {/* Actions */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                        <Button
-                            variant={requested ? "success" : "primary"}
-                            onClick={handleRequestConnection}
-                            disabled={isRequesting || requested}
-                            className="btn-interactive"
-                            style={{ minWidth: '160px', position: 'relative', overflow: 'hidden' }}
-                        >
-                            {isRequesting ? (
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span className="spinner" style={{ width: '16px', height: '16px' }}></span>
-                                    Requesting...
-                                </span>
-                            ) : requested ? (
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span>✓</span>
-                                    <span>Request Sent</span>
-                                </span>
-                            ) : (
-                                <>
-                                    <span>Request Mentorship</span>
-                                    <span className="btn-shine"></span>
-                                </>
-                            )}
-                        </Button>
+                        {!isOwnProfile && (
+                            <Button
+                                variant={connectionStatus === 'accepted' ? "success" : connectionStatus === 'pending' ? "secondary" : "primary"}
+                                onClick={handleRequestConnection}
+                                disabled={isRequesting || connectionStatus === 'pending' || connectionStatus === 'accepted'}
+                                className="btn-interactive"
+                                style={{ minWidth: '160px', position: 'relative', overflow: 'hidden' }}
+                            >
+                                {isRequesting ? (
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span className="spinner" style={{ width: '16px', height: '16px' }}></span>
+                                        Requesting...
+                                    </span>
+                                ) : connectionStatus === 'accepted' ? (
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span>✓</span>
+                                        <span>Connected</span>
+                                    </span>
+                                ) : connectionStatus === 'pending' ? (
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span>⏳</span>
+                                        <span>Request Sent</span>
+                                    </span>
+                                ) : (
+                                    <>
+                                        <span>Request Mentorship</span>
+                                        <span className="btn-shine"></span>
+                                    </>
+                                )}
+                            </Button>
+                        )}
                         <button
                             className="mentor-view-profile-btn"
-                            onClick={() => window.location.href = `/profile`}
+                            onClick={handleViewProfile}
+                            type="button"
                         >
                             View Profile →
                         </button>

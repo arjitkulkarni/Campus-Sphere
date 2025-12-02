@@ -6,7 +6,7 @@ import Card from '../atoms/Card';
 import Button from '../atoms/Button';
 
 const OpportunityCard = ({ opportunity, onUpdate }) => {
-    const { user, refreshUser } = useAuth();
+    const { user } = useAuth();
     const { success, error: showError } = useToast();
     const [isApplying, setIsApplying] = useState(false);
     const [hasApplied, setHasApplied] = useState(
@@ -20,9 +20,6 @@ const OpportunityCard = ({ opportunity, onUpdate }) => {
             await opportunitiesAPI.apply(opportunity._id);
             setHasApplied(true);
             success('Application submitted successfully! 🎉');
-            if (refreshUser) {
-                await refreshUser();
-            }
             if (onUpdate) onUpdate();
         } catch (err) {
             console.error('Error applying:', err);

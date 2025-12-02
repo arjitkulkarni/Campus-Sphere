@@ -2795,6 +2795,65 @@ select::-ms-expand {
   transform: translateX(4px);
 }
 
+/* Responsive Mentor Card */
+@media (max-width: 768px) {
+  .mentor-card-enhanced {
+    padding: 1.25rem !important;
+  }
+  
+  .mentor-card-enhanced > div {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+  
+  .mentor-avatar-section {
+    align-self: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .mentor-avatar-large {
+    width: 70px !important;
+    height: 70px !important;
+    font-size: 1.75rem !important;
+  }
+  
+  .mentor-status-badge {
+    font-size: 0.5625rem !important;
+    padding: 0.2rem 0.4rem !important;
+  }
+  
+  .mentor-karma-badge {
+    font-size: 0.6875rem !important;
+    padding: 0.3rem 0.5rem !important;
+  }
+  
+  .mentor-card-enhanced h3 {
+    font-size: 1.125rem !important;
+    text-align: center;
+  }
+  
+  .mentor-card-enhanced > div > div:last-child {
+    text-align: center;
+  }
+  
+  .mentor-card-enhanced > div > div:last-child > div:last-child {
+    justify-content: center;
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .mentor-card-enhanced > div > div:last-child > div:last-child > button,
+  .mentor-card-enhanced > div > div:last-child > div:last-child > .btn {
+    width: 100%;
+    min-width: unset !important;
+  }
+  
+  .mentor-skill-chip {
+    font-size: 0.75rem !important;
+    padding: 0.4rem 0.8rem !important;
+  }
+}
+
 /* Enhanced Opportunity Card */
 .opportunity-card-enhanced {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -5278,4 +5337,75 @@ select.form-input {
   font-weight: 700;
   color: var(--bg-primary);
   flex-shrink: 0;
+}
+
+/* Modal Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced Date/Time Input Styling */
+input[type="date"],
+input[type="time"] {
+  color-scheme: dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  color: var(--text-primary);
+  padding: 0 0.2rem;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field:focus,
+input[type="date"]::-webkit-datetime-edit-day-field:focus,
+input[type="date"]::-webkit-datetime-edit-year-field:focus {
+  background-color: rgba(0, 240, 255, 0.2);
+  color: var(--primary);
+  outline: none;
+  border-radius: 4px;
+}
+
+input[type="time"]::-webkit-datetime-edit-hour-field,
+input[type="time"]::-webkit-datetime-edit-minute-field,
+input[type="time"]::-webkit-datetime-edit-second-field,
+input[type="time"]::-webkit-datetime-edit-ampm-field {
+  color: var(--text-primary);
+  padding: 0 0.2rem;
+}
+
+input[type="time"]::-webkit-datetime-edit-hour-field:focus,
+input[type="time"]::-webkit-datetime-edit-minute-field:focus {
+  background-color: rgba(0, 240, 255, 0.2);
+  color: var(--primary);
+  outline: none;
+  border-radius: 4px;
 }

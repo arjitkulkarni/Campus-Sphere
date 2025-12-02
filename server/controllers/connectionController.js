@@ -15,20 +15,28 @@ const populateConnection = (conn) => {
 exports.getMentors = async (req, res) => {
     try {
         const allUsers = users.findAll();
+        // Filter mentors: either isMentor is true OR role is 'alumni'
         const mentors = allUsers
-            .filter(user => user.isMentor && user._id !== req.user.id)
+            .filter(user => {
+                if (!user || user._id === req.user.id) return false;
+                // Check if user is a mentor (either isMentor flag or alumni role)
+                return (user.isMentor === true) || (user.role === 'alumni');
+            })
             .map(user => {
                 const { password: _, ...userData } = user;
                 return {
-                    _id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    role: user.role,
-                    headline: user.headline,
-                    bio: user.bio,
-                    skills: user.skills || [],
-                    company: user.company,
-                    jobTitle: user.jobTitle,
+                    _id: user._id || user.id,
+                    id: user.id || user._id,
+                    name: user.name || 'Unknown',
+                    email: user.email || '',
+                    role: user.role || 'student',
+                    headline: user.headline || '',
+                    bio: user.bio || '',
+                    skills: Array.isArray(user.skills) ? user.skills : [],
+                    company: user.company || '',
+                    jobTitle: user.jobTitle || '',
+                    college: user.college || '',
+                    graduationYear: user.graduationYear || null,
                     karma: user.karma || 0,
                 };
             });
@@ -36,7 +44,7 @@ exports.getMentors = async (req, res) => {
         res.status(200).json(mentors);
     } catch (error) {
         console.error('GetMentors error:', error);
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: error.message || 'Failed to fetch mentors' });
     }
 };
 
