@@ -61,7 +61,8 @@ export const AuthProvider = ({ children }) => {
                 throw customError;
             } else if (error.request) {
                 // Request was made but no response received
-                throw new Error('Unable to connect to server. Please check if the backend is running on http://localhost:5000');
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+                throw new Error(`Unable to connect to server. Please check if the backend is running on ${apiUrl}`);
             } else {
                 // Error in setting up the request
                 throw new Error(error.message || 'Registration failed');
