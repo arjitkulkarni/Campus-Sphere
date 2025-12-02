@@ -38,7 +38,29 @@ export const AuthProvider = ({ children }) => {
             setUser(data);
             return data;
         } catch (error) {
-            throw new Error(error.response?.data?.message || 'Login failed');
+            console.error('Login API error:', error);
+            // Preserve the full error object so Login component can access response details
+            if (error.response) {
+                // Server responded with error status
+                const errorMessage = error.response.data?.message || error.response.data?.error || 'Login failed';
+                const customError = new Error(errorMessage);
+                customError.response = error.response;
+                throw customError;
+            } else if (error.request) {
+                // Request was made but no response received (network error, CORS, etc.)
+                const apiUrl = import.meta.env.VITE_API_URL || 
+                              (import.meta.env.PROD ? window.location.origin + '/api' : 'http://localhost:5000/api');
+                // Extract base URL without /api for display, or show full URL if it's absolute
+                let displayUrl = apiUrl;
+                if (apiUrl.startsWith('/')) {
+                    displayUrl = window.location.origin + apiUrl;
+                }
+                displayUrl = displayUrl.replace('/api', '');
+                throw new Error(`Unable to connect to server. Please check if the backend is running on ${displayUrl}`);
+            } else {
+                // Error in setting up the request
+                throw new Error(error.message || 'Login failed');
+            }
         }
     };
 

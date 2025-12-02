@@ -5,12 +5,21 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL || 
                  (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 
+// Log API URL for debugging (always log in production to help troubleshoot)
+console.log('[CampusSphere API Config]', {
+    baseURL: API_URL,
+    environment: import.meta.env.MODE,
+    viteApiUrl: import.meta.env.VITE_API_URL || 'not set (using fallback)',
+    isProduction: import.meta.env.PROD
+});
+
 // Create axios instance
 const api = axios.create({
     baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json',
     },
+    timeout: 10000, // 10 second timeout
 });
 
 // Add token to requests
@@ -31,6 +40,28 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
+        // Log error details for debugging
+        if (error.response) {
+            // Server responded with error
+            console.error('API Error Response:', {
+                status: error.response.status,
+                data: error.response.data,
+                url: error.config?.url,
+                baseURL: error.config?.baseURL
+            });
+        } else if (error.request) {
+            // Request was made but no response received
+            console.error('API Network Error:', {
+                message: error.message,
+                url: error.config?.url,
+                baseURL: error.config?.baseURL,
+                fullURL: error.config?.baseURL + error.config?.url
+            });
+        } else {
+            // Error in setting up the request
+            console.error('API Request Setup Error:', error.message);
+        }
+
         if (error.response?.status === 401) {
             localStorage.removeItem('token');
             window.location.href = '/login';
